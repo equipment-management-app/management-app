@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>機材管理アプリ</title>
+    <style>
+        body {
+            font-family: sans-serif;
+        }
+        header {
+            background-color: #f0f0f0;
+            padding: 1em;
+            margin-bottom: 1em;
+        }
+        header nav a {
+            margin-right: 1em;
+            text-decoration: none;
+            color: #333;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 1em;
+        }
+        th, td {
+            border: 1px solid #ddd;
+            padding: 8px;
+            text-align: left;
+        }
+        th {
+            background-color: #f2f2f2;
+        }
+        tfoot td {
+            font-weight: bold;
+        }
+        .total-label {
+            text-align: right;
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <nav>
+            <a href="index.html">機材リスト</a>
+            <a href="現場リスト.html">現場リスト</a>
+        </nav>
+    </header>
+
+    <main>
+        <h1>機材リスト</h1>
+        <table id="equipmentTable">
+            <thead>
+                <tr>
+                    <th>機材名</th>
+                    <th>個数</th>
+                    <th>単価</th>
+                    <th>小計</th>
+                </tr>
+            </thead>
+            <tbody>
+                </tbody>
+            <tfoot>
+                <tr>
+                    <td colspan="3" class="total-label">合計</td>
+                    <td id="totalAmount">0</td> </tr>
+            </tfoot>
+        </table>
+    </main>
+
+    <script>
+        // テーブル更新関数
+        function updateTable(data) {
+            const tableBody = document.getElementById('equipmentTable').getElementsByTagName('tbody')[0];
+            const totalAmountCell = document.getElementById('totalAmount');
+            let overallTotal = 0;
+
+            tableBody.innerHTML = '';
+
+            data.forEach(row => {
+                const newRow = tableBody.insertRow();
+                const cellName = newRow.insertCell();
+                const cellQuantity = newRow.insertCell();
+                const cellUnitPrice = newRow.insertCell();
+                const cellSubtotal = newRow.insertCell();
+
+                const itemName = row[0]; // 機材名 
+                const quantity = parseInt(row[1]) || 0; // 個数 
+                const unitPrice = parseFloat(row[2]) || 0; // 単価 
+                const subtotal = quantity * unitPrice;
+
+                cellName.textContent = itemName;
+                cellQuantity.textContent = quantity;
+                cellUnitPrice.textContent = unitPrice.toLocaleString(); // 単価を3桁区切りで表示
+                cellSubtotal.textContent = subtotal.toLocaleString(); // 小計を3桁区切りで表示
+
+                overallTotal += subtotal;
+            });
+
+            totalAmountCell.textContent = overallTotal.toLocaleString(); // 合計金額を3桁区切りで表示
+        }
+
+        // 以下スプシ連携用
+        function loadEquipmentData() {
+            google.script.run.withSuccessHandler(updateTable)
+                             .withFailureHandler(onFailure)
+                             .getSpreadsheetData_sample(); // GAS側で定義する関数名
+        }
+
+        function onFailure(error) {
+            console.error("GASの呼び出しに失敗しました: ", error);
+            alert("データの読み込みに失敗しました。");
+        }
+
+        // ページ読み込み時にデータを取得・表示
+        window.onload = function() {
+            if (typeof google !== 'undefined' && google.script && google.script.run) {
+                loadEquipmentData();
+            } else {
+                // 読み込み失敗のときどうしようか
+            }
+        };
+    </script>
+</body>
+</html>
