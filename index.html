@@ -18,6 +18,11 @@
             text-decoration: none;
             color: #333;
         }
+        .action-buttons button {
+            margin: 5px;
+            padding: 8px 12px;
+            cursor: pointer;
+        }
         table {
             width: 100%;
             border-collapse: collapse;
@@ -42,13 +47,19 @@
 <body>
     <header>
         <nav>
-            <a href="index.html">機材リスト</a>
-            <a href="現場リスト.html">現場リスト</a>
-        </nav>
+            <a href="#">機材リスト</a> </nav>
     </header>
 
     <main>
         <h1>機材リスト</h1>
+
+        <div class="action-buttons">
+            <button onclick="loadAndDisplayEquipmentData()">機材リスト更新</button>
+            <button onclick="registerEquipment()">新しい機材を登録</button>
+            <button onclick="getSiteList()">現場リスト取得 (仮)</button>
+            <button onclick="registerSite()">新しい現場を登録 (仮)</button>
+            </div>
+
         <table id="equipmentTable">
             <thead>
                 <tr>
@@ -63,19 +74,32 @@
             <tfoot>
                 <tr>
                     <td colspan="3" class="total-label">合計</td>
-                    <td id="totalAmount">0</td> </tr>
+                    <td id="totalAmount">0</td>
+                </tr>
             </tfoot>
         </table>
     </main>
 
     <script>
+
         // テーブル更新関数
         function updateTable(data) {
             const tableBody = document.getElementById('equipmentTable').getElementsByTagName('tbody')[0];
             const totalAmountCell = document.getElementById('totalAmount');
             let overallTotal = 0;
 
-            tableBody.innerHTML = '';
+            tableBody.innerHTML = ''; 
+
+            if (!data || !Array.isArray(data) || data.length === 0) {
+                console.warn("updateTable: データが空または不正です。", data);
+                totalAmountCell.textContent = '0';
+                const newRow = tableBody.insertRow();
+                const cellError = newRow.insertCell();
+                cellError.colSpan = 4;
+                cellError.textContent = data ? "データがありません。" : "データの読み込みに失敗しました。";
+                cellError.style.textAlign = "center";
+                return;
+            }
 
             data.forEach(row => {
                 const newRow = tableBody.insertRow();
@@ -84,42 +108,171 @@
                 const cellUnitPrice = newRow.insertCell();
                 const cellSubtotal = newRow.insertCell();
 
-                const itemName = row[0]; // 機材名 
-                const quantity = parseInt(row[1]) || 0; // 個数 
-                const unitPrice = parseFloat(row[2]) || 0; // 単価 
+                const itemName = row[0] || "N/A"; // 機材名
+                const quantity = parseInt(row[1]) || 0; // 個数
+                const unitPrice = parseFloat(row[2]) || 0; // 単価
                 const subtotal = quantity * unitPrice;
 
                 cellName.textContent = itemName;
                 cellQuantity.textContent = quantity;
-                cellUnitPrice.textContent = unitPrice.toLocaleString(); // 単価を3桁区切りで表示
-                cellSubtotal.textContent = subtotal.toLocaleString(); // 小計を3桁区切りで表示
+                cellUnitPrice.textContent = unitPrice.toLocaleString(); 
+                cellSubtotal.textContent = subtotal.toLocaleString(); 
 
                 overallTotal += subtotal;
             });
 
-            totalAmountCell.textContent = overallTotal.toLocaleString(); // 合計金額を3桁区切りで表示
+            totalAmountCell.textContent = overallTotal.toLocaleString(); 
         }
 
-        // 以下スプシ連携用
-        function loadEquipmentData() {
-            google.script.run.withSuccessHandler(updateTable)
-                             .withFailureHandler(onFailure)
-                             .getSpreadsheetData_sample(); // GAS側で定義する関数名
-        }
-
+        // エラー処理関数
         function onFailure(error) {
             console.error("GASの呼び出しに失敗しました: ", error);
-            alert("データの読み込みに失敗しました。");
+            alert("処理に失敗しました。\n" + (error.message || error));
+            const tableBody = document.getElementById('equipmentTable').getElementsByTagName('tbody')[0];
+            if (document.getElementById('totalAmount')) {
+                document.getElementById('totalAmount').textContent = '0';
+            }
         }
 
-        // ページ読み込み時にデータを取得・表示
+        // GASの関数
+        function fetchData(formData, successCallback, errorCallback) {
+            const gasUrl = 'https://script.google.com/macros/s/AKfycbwuAZl1MbWM7L61uzva-E-AWtLH0QANr80n7v_el274LpQ7Sjmcj5qkiNXBGgkmVN03/exec';
+            fetch(gasUrl, {
+                method: 'POST',
+                body: formData
+            })
+            .then(res => {
+                if (!res.ok) {
+                    return res.text().then(text => {
+                        let errorMsg = `HTTP error! status: ${res.status}`;
+                        try {
+                            const errJson = JSON.parse(text);
+                            if (errJson && errJson.error) {
+                                errorMsg += `, message: ${errJson.error.message || text}`;
+                            } else {
+                                errorMsg += `, message: ${text}`;
+                            }
+                        } catch (e) {
+                            errorMsg += `, message: ${text}`;
+                        }
+                        throw new Error(errorMsg);
+                    });
+                }
+                return res.json();
+            })
+            .then(responseData => {
+                if (responseData && responseData.status === 'success' && Array.isArray(responseData.data)) {
+                    successCallback(responseData.data);
+                } else if (responseData && responseData.status === 'success' && responseData.data === undefined && responseData.message) {
+                    successCallback({ message: responseData.message }); 
+                } else if (Array.isArray(responseData)) {
+                    successCallback(responseData);
+                } else if (responseData && responseData.status === 'error') {
+                     console.error("GASからエラーが返されました:", responseData.message || responseData);
+                     errorCallback(new Error(responseData.message || "GAS処理エラー"));
+                }
+                else {
+                    console.warn("GASからの予期しないデータ形式です:", responseData);
+                    errorCallback(new Error("GASから予期しないデータ形式が返されました。詳細はコンソールを確認してください。"));
+                }
+            })
+            .catch(err => {
+                errorCallback(err);
+            });
+        }
+
+        // テーブル表示
+        function loadAndDisplayEquipmentData() {
+            const formData = new FormData();
+            formData.append('type', 'getEquipmentList');
+            fetchData(formData, updateTable, onFailure);
+        }
+
         window.onload = function() {
-            if (typeof google !== 'undefined' && google.script && google.script.run) {
-                loadEquipmentData();
-            } else {
-                // 読み込み失敗のときどうしようか
-            }
+            loadAndDisplayEquipmentData();
         };
+
+
+        function getIdParam() {
+            const urlParams = new URLSearchParams(window.location.search);
+            const id = urlParams.get('id');
+            if (!id) {
+                console.warn('ID parameter is missing in the URL');
+                return null;
+            }
+            return id;
+        }
+
+        function getSiteDetails() {
+            const id = getIdParam(); 
+            if (!id) {
+                alert("現場詳細の取得に必要なIDが指定されていません。");
+                return;
+            }
+            const formData = new FormData();
+            formData.append('id', id);
+            formData.append('type', 'getSiteDetails');
+            fetchData(formData, (data) => {
+                console.log("Response from GAS (getSiteDetails):", data);
+                alert("取得した現場詳細:\n" + JSON.stringify(data, null, 2));
+            }, onFailure);
+        }
+
+        function getSiteList() {
+            const formData = new FormData();
+            formData.append('type', 'getSiteList');
+            fetchData(formData, (data) => {
+                console.log("Response from GAS (getSiteList):", data);
+                alert("取得した現場リスト:\n" + JSON.stringify(data, null, 2));
+            }, onFailure);
+        }
+
+        function registerSite() {
+            const siteName = prompt("登録する現場名を入力してください:", "株式会社未来創造");
+            if (!siteName || siteName.trim() === "") {
+                alert("現場名が入力されていません。");
+                return;
+            }
+
+            const formData = new FormData();
+            formData.append('type', 'registerSite');
+            formData.append('name', siteName.trim());
+            fetchData(formData, (response) => { 
+                console.log("Response from GAS (registerSite):", response);
+                alert(response.message || "現場を登録しました。");
+            }, onFailure);
+        }
+
+        function registerEquipment() {
+            const equipName = prompt("登録する機材名を入力してください:", "カメラ");
+            if (!equipName || equipName.trim() === "") {
+                alert("機材名が入力されていません。");
+                return;
+            }
+            const equipTotalStr = prompt("個数を入力してください:", "10");
+            if (!equipTotalStr || isNaN(parseInt(equipTotalStr))) {
+                alert("個数が正しく入力されていません。");
+                return;
+            }
+            const equipUnitPriceStr = prompt("単価を入力してください:", "10000");
+            if (!equipUnitPriceStr || isNaN(parseFloat(equipUnitPriceStr))) {
+                alert("単価が正しく入力されていません。");
+                return;
+            }
+
+            const formData = new FormData();
+            formData.append('type', 'registerEquipment');
+            formData.append('name', equipName.trim());
+            formData.append('total', parseInt(equipTotalStr));
+            formData.append('unitPrice', parseFloat(equipUnitPriceStr));
+
+            fetchData(formData, (response) => { 
+                console.log("Response from GAS (registerEquipment):", response);
+                alert(response.message || "機材を登録しました。");
+                loadAndDisplayEquipmentData(); 
+            }, onFailure);
+        }
+
     </script>
 </body>
 </html>
