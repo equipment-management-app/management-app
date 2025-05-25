@@ -3,276 +3,709 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>機材管理アプリ</title>
+    <title>機材現場管理システム</title>
     <style>
         body {
             font-family: sans-serif;
+            margin: 20px;
+            background-color: #f5f5f5;
         }
-        header {
-            background-color: #f0f0f0;
-            padding: 1em;
-            margin-bottom: 1em;
-        }
-        header nav a {
-            margin-right: 1em;
-            text-decoration: none;
+        h1, h2 {
+            border-bottom: 2px solid #007bff;
+            padding-bottom: 10px;
             color: #333;
         }
-        .action-buttons button {
-            margin: 5px;
-            padding: 8px 12px;
+        .container {
+            margin-bottom: 30px;
+            padding: 20px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            background-color: white;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        label {
+            display: inline-block;
+            width: 120px;
+            margin-bottom: 5px;
+            font-weight: bold;
+        }
+        input[type="text"], input[type="number"] {
+            width: 200px;
+            padding: 8px;
+            margin-bottom: 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+        }
+        button {
+            padding: 10px 20px;
+            margin-right: 10px;
+            background-color: #007bff;
+            color: white;
+            border: none;
+            border-radius: 4px;
             cursor: pointer;
+            font-size: 14px;
+        }
+        button:hover {
+            background-color: #0056b3;
+        }
+        .result-area {
+            margin-top: 15px;
+            padding: 15px;
+            background-color: #f9f9f9;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            min-height: 50px;
+            white-space: pre-wrap;
+            word-wrap: break-word;
+        }
+        textarea {
+            width: 100%;
+            min-height: 100px;
+            margin-bottom: 10px;
+            padding: 8px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+        }
+
+        /* テーブルスタイル */
+        .table-container {
+            overflow-x: auto;
+            margin-top: 10px;
         }
         table {
             width: 100%;
             border-collapse: collapse;
-            margin-bottom: 1em;
-        }
-        th, td {
-            border: 1px solid #ddd;
-            padding: 8px;
-            text-align: left;
+            background-color: white;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
         }
         th {
-            background-color: #f2f2f2;
+            background-color: #007bff;
+            color: white;
+            padding: 12px 8px;
+            text-align: left;
+            font-weight: bold;
+            border: 1px solid #0056b3;
         }
-        tfoot td {
+        td {
+            padding: 10px 8px;
+            border: 1px solid #ddd;
+            vertical-align: top;
+        }
+        tr:nth-child(even) {
+            background-color: #f8f9fa;
+        }
+        tr:hover {
+            background-color: #e9ecef;
+        }
+        .no-data {
+            text-align: center;
+            color: #666;
+            font-style: italic;
+            padding: 20px;
+        }
+        .equipment-cell {
+            max-width: 300px;
+            word-wrap: break-word;
+        }
+        .status-success {
+            color: #28a745;
             font-weight: bold;
         }
-        .total-label {
-            text-align: right;
+        .status-error {
+            color: #dc3545;
+            font-weight: bold;
+        }
+        .json-display {
+            background-color: #f8f9fa;
+            padding: 8px;
+            border-radius: 4px;
+            font-family: monospace;
+            font-size: 12px;
+            border: 1px solid #e9ecef;
+        }
+        .equipment-item {
+            display: inline-block;
+            background-color: #e9ecef;
+            padding: 8px 12px;
+            margin: 4px;
+            border-radius: 15px;
+            border: 1px solid #adb5bd;
+            font-size: 14px;
+        }
+        .equipment-item .remove-btn {
+            background-color: #dc3545;
+            color: white;
+            border: none;
+            border-radius: 50%;
+            width: 20px;
+            height: 20px;
+            margin-left: 8px;
+            cursor: pointer;
+            font-size: 12px;
+            padding: 0;
+        }
+        .equipment-item .remove-btn:hover {
+            background-color: #c82333;
         }
     </style>
 </head>
 <body>
-    <header>
-        <nav>
-            <a href="#">機材リスト</a> </nav>
-    </header>
+    <h1>🏗️ 機材現場管理システム</h1>
 
-    <main>
-        <h1>機材リスト</h1>
+    <div class="container">
+        <h2>📋 現場管理</h2>
 
-        <div class="action-buttons">
-            <button onclick="loadAndDisplayEquipmentData()">機材リスト更新</button>
-            <button onclick="registerEquipment()">新しい機材を登録</button>
-            <button onclick="getSiteList()">現場リスト取得 (仮)</button>
-            <button onclick="registerSite()">新しい現場を登録 (仮)</button>
+        <div>
+            <button onclick="getSiteList();">現場リスト取得</button>
+            <div id="siteListResult" class="result-area">ここに現場リストが表示されます。</div>
+        </div>
+        <hr>
+        <div>
+            <h3>🔍 現場詳細取得</h3>
+            <label for="siteDetailId">固有ID:</label>
+            <input type="text" id="siteDetailId" name="siteDetailId" placeholder="例: abc123def456">
+            <button onclick="getSiteDetails();">現場詳細取得</button>
+            <div id="siteDetailsResult" class="result-area">ここに現場詳細が表示されます。</div>
+        </div>
+        <hr>
+        <div>
+            <h3>➕ 現場登録</h3>
+            <form id="registerSiteForm">
+                <label for="siteName">現場名:</label>
+                <input type="text" id="siteName" name="siteName" required>
+                <br>
+
+                <div style="margin: 20px 0;">
+                    <h4>🔧 機材追加</h4>
+                    <div style="display: flex; gap: 10px; align-items: end; flex-wrap: wrap; margin-bottom: 10px;">
+                        <div>
+                            <label for="equipmentName" style="width: auto;">機材名:</label><br>
+                            <input type="text" id="equipmentName" placeholder="例: クレーン" style="width: 150px;">
+                        </div>
+                        <div>
+                            <label for="equipmentInUse" style="width: auto;">使用数:</label><br>
+                            <input type="number" id="equipmentInUse" min="0" value="1" style="width: 80px;">
+                        </div>
+                        <div>
+                            <button type="button" onclick="addEquipmentToSite();" style="background-color: #28a745;">追加</button>
+                        </div>
+                    </div>
+
+                    <div id="equipmentList" style="margin: 10px 0;">
+                        <h5>追加済み機材:</h5>
+                        <div id="equipmentItems" style="background-color: #f8f9fa; padding: 10px; border-radius: 4px; min-height: 40px; border: 1px dashed #ccc;">
+                            <span style="color: #666; font-style: italic;">機材が追加されると、ここに表示されます</span>
+                        </div>
+                    </div>
+
+                    <div style="margin: 10px 0;">
+                        <button type="button" onclick="clearEquipmentList();" style="background-color: #6c757d; font-size: 12px; padding: 5px 10px;">リストをクリア</button>
+                        <button type="button" onclick="toggleJsonView();" style="background-color: #17a2b8; font-size: 12px; padding: 5px 10px;">JSON表示切替</button>
+                    </div>
+                </div>
+
+                <div id="jsonSection" style="display: none; margin: 15px 0;">
+                    <label for="siteEquipmentJson">機材情報 (JSON):</label>
+                    <textarea id="siteEquipmentJson" name="siteEquipmentJson" placeholder='[{"name": "機材A", "inUse": 2}, {"name": "機材B", "inUse": 1}]' readonly style="background-color: #f8f9fa;"></textarea>
+                </div>
+
+                <br>
+                <button type="button" onclick="registerSite();">現場登録</button>
+            </form>
+            <div id="registerSiteResult" class="result-area">ここに現場登録の結果が表示されます。</div>
+        </div>
+    </div>
+
+    <div class="container">
+        <h2>🔧 機材管理</h2>
+        <div>
+            <button onclick="getEquipmentList();">機材リスト取得</button>
+            <div id="equipmentListResult" class="result-area">ここに機材リストが表示されます。</div>
+        </div>
+        <hr>
+        <div>
+            <h3>➕ 機材登録</h3>
+            <form id="registerEquipmentForm">
+                <label for="regEqName">機材名:</label>
+                <input type="text" id="regEqName" name="regEqName" required>
+                <br>
+                <label for="regEqTotal">総数:</label>
+                <input type="number" id="regEqTotal" name="regEqTotal" required>
+                <br>
+                <label for="regEqUnitPrice">単価:</label>
+                <input type="number" id="regEqUnitPrice" name="regEqUnitPrice" required>
+                <br>
+                <button type="button" onclick="registerEquipment();">機材登録</button>
+            </form>
+            <div id="registerEquipmentResult" class="result-area">ここに機材登録の結果が表示されます。</div>
+        </div>
+        <hr>
+        <div id="changeEquipment">
+            <h3>✏️ 機材情報変更</h3>
+            <form id="changeEquipmentForm">
+                <label for="changeEqName">機材名:</label>
+                <input type="text" id="changeEqName" name="changeEqName" required>
+                <br>
+                <label for="changeEqQuantity">総数 (変更後):</label>
+                <input type="number" id="changeEqQuantity" name="changeEqQuantity" required>
+                <br>
+                <label for="changeEqUnitPrice">単価 (変更後):</label>
+                <input type="number" id="changeEqUnitPrice" name="changeEqUnitPrice" required>
+                <br>
+                <button type="button" onclick="changeEquipmentInfo();">情報変更</button>
+            </form>
+            <div id="changeEquipmentResult" class="result-area">ここに機材情報変更の結果が表示されます。</div>
+        </div>
+    </div>
+
+<script>
+    const GAS_URL = 'https://script.google.com/macros/s/AKfycbwuAZl1MbWM7L61uzva-E-AWtLH0QANr80n7v_el274LpQ7Sjmcj5qkiNXBGgkmVN03/exec'; // あなたのGASのURLに置き換えてください
+
+    // 現場登録用の機材リスト管理
+    let siteEquipmentList = [];
+
+    // 機材を現場に追加
+    function addEquipmentToSite() {
+        const nameInput = document.getElementById('equipmentName');
+        const inUseInput = document.getElementById('equipmentInUse');
+
+        const name = nameInput.value.trim();
+        const inUse = parseInt(inUseInput.value) || 1;
+
+        if (!name) {
+            alert('機材名を入力してください。');
+            return;
+        }
+
+        // 同じ機材名が既に存在するかチェック
+        const existingIndex = siteEquipmentList.findIndex(item => item.name === name);
+        if (existingIndex !== -1) {
+            // 既存の機材の使用数を更新
+            siteEquipmentList[existingIndex].inUse = inUse;
+        } else {
+            // 新しい機材を追加
+            siteEquipmentList.push({ name, inUse });
+        }
+
+        // 入力フィールドをクリア
+        nameInput.value = '';
+        inUseInput.value = '1';
+
+        updateEquipmentDisplay();
+        updateJsonField();
+    }
+
+    // 機材リストの表示を更新
+    function updateEquipmentDisplay() {
+        const itemsDiv = document.getElementById('equipmentItems');
+
+        if (siteEquipmentList.length === 0) {
+            itemsDiv.innerHTML = '<span style="color: #666; font-style: italic;">機材が追加されると、ここに表示されます</span>';
+            return;
+        }
+
+        let html = '';
+        siteEquipmentList.forEach((item, index) => {
+            html += `
+                <div class="equipment-item">
+                    <strong>${item.name}</strong> × ${item.inUse}
+                    <button class="remove-btn" onclick="removeEquipmentFromSite(${index})" title="削除">×</button>
+                </div>
+            `;
+        });
+
+        itemsDiv.innerHTML = html;
+    }
+
+    // 機材をリストから削除
+    function removeEquipmentFromSite(index) {
+        siteEquipmentList.splice(index, 1);
+        updateEquipmentDisplay();
+        updateJsonField();
+    }
+
+    // 機材リストをクリア
+    function clearEquipmentList() {
+        if (siteEquipmentList.length === 0) {
+            return;
+        }
+
+        if (confirm('追加済みの機材リストをすべて削除してもよろしいですか？')) {
+            siteEquipmentList = [];
+            updateEquipmentDisplay();
+            updateJsonField();
+        }
+    }
+
+    // JSONフィールドを更新
+    function updateJsonField() {
+        const jsonTextarea = document.getElementById('siteEquipmentJson');
+        jsonTextarea.value = JSON.stringify(siteEquipmentList, null, 2);
+    }
+
+    // JSON表示の切り替え
+    function toggleJsonView() {
+        const jsonSection = document.getElementById('jsonSection');
+        const isVisible = jsonSection.style.display !== 'none';
+        jsonSection.style.display = isVisible ? 'none' : 'block';
+
+        // JSON表示を開く時に最新のデータで更新
+        if (!isVisible) {
+            updateJsonField();
+        }
+    }
+
+    // Enterキーで機材追加
+    document.addEventListener('DOMContentLoaded', function() {
+        const equipmentNameInput = document.getElementById('equipmentName');
+        const equipmentInUseInput = document.getElementById('equipmentInUse');
+
+        equipmentNameInput.addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                addEquipmentToSite();
+            }
+        });
+
+        equipmentInUseInput.addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                addEquipmentToSite();
+            }
+        });
+    });
+
+    // --- 共通関数 ---
+    function fetchData(formData) {
+        return fetch(GAS_URL, {
+            method: 'POST',
+            body: formData
+        })
+        .then(response => {
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
+            return response.json();
+        })
+        .catch(error => {
+            console.error("Fetch Error:", error);
+            throw error;
+        });
+    }
+
+    function createSiteTable(siteData) {
+        if (!Array.isArray(siteData) || siteData.length === 0) {
+            return '<div class="no-data">現場データがありません</div>';
+        }
+
+        let tableHtml = `
+            <div class="table-container">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>固有ID</th>
+                            <th>現場ID</th>
+                            <th>現場名</th>
+                            <th>状態</th>     
+                        </tr>
+                    </thead>
+                    <tbody>
+        `;
+
+        siteData.forEach(site => {
+            const equipmentDisplay = site.equipment ?
+                `<div class="json-display">${JSON.stringify(site.equipment, null, 2)}</div>` :
+                '<span style="color: #666;">-</span>';
+
+            const siteState = site.state || '-';
+            const createdAtDisplay = site.createdAt || '-';
+
+            tableHtml += `
+                <tr>
+                    <td><code style="background-color: #e9ecef; padding: 2px 6px; border-radius: 3px; font-family: monospace; font-size: 12px;">${site.uniqueId || site.uid || site._id || '-'}</code></td>
+                    <td>${site.id || '-'}</td>
+                    <td><strong>${site.name || '-'}</strong></td>
+                    <td>${siteState}</td>  
+                    <td class="equipment-cell">${equipmentDisplay}</td>
+                    <td>${createdAtDisplay}</td>
+                </tr>
+            `;
+        });
+
+        tableHtml += `
+                    </tbody>
+                </table>
             </div>
+        `;
 
-        <table id="equipmentTable">
-            <thead>
+        return tableHtml;
+    }
+
+
+    function createEquipmentTable(equipmentData) {
+        if (!Array.isArray(equipmentData) || equipmentData.length === 0) {
+            return '<div class="no-data">機材データがありません</div>';
+        }
+
+        let tableHtml = `
+            <div class="table-container">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>機材名</th>
+                            <th>総数</th>
+                            <th>使用中</th>
+                            <th>利用可能</th>
+                            <th>単価</th>
+                            <th>総額</th>
+                            <th>稼働率</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+        `;
+
+        equipmentData.forEach(equipment => {
+            const total = equipment.total || 0;
+            const inUse = equipment.inUse || 0;
+            const available = total - inUse;
+            const unitPrice = equipment.unitPrice || 0;
+            const totalValue = total * unitPrice;
+            const utilizationRate = total > 0 ? ((inUse / total) * 100).toFixed(1) : '0.0';
+
+            tableHtml += `
                 <tr>
-                    <th>機材名</th>
-                    <th>個数</th>
-                    <th>単価</th>
-                    <th>小計</th>
+                    <td><strong>${equipment.name || '-'}</strong></td>
+                    <td>${total.toLocaleString()}</td>
+                    <td style="color: #dc3545;">${inUse.toLocaleString()}</td>
+                    <td style="color: #28a745;">${available.toLocaleString()}</td>
+                    <td>¥${unitPrice.toLocaleString()}</td>
+                    <td><strong>¥${totalValue.toLocaleString()}</strong></td>
+                    <td>
+                        <span style="color: ${utilizationRate > 80 ? '#dc3545' : utilizationRate > 50 ? '#ffc107' : '#28a745'}">
+                            ${utilizationRate}%
+                        </span>
+                    </td>
                 </tr>
-            </thead>
-            <tbody>
-                </tbody>
-            <tfoot>
-                <tr>
-                    <td colspan="3" class="total-label">合計</td>
-                    <td id="totalAmount">0</td>
-                </tr>
-            </tfoot>
-        </table>
-    </main>
+            `;
+        });
 
-    <script>
+        tableHtml += `
+                    </tbody>
+                </table>
+            </div>
+        `;
 
-        // テーブル更新関数
-        function updateTable(data) {
-            const tableBody = document.getElementById('equipmentTable').getElementsByTagName('tbody')[0];
-            const totalAmountCell = document.getElementById('totalAmount');
-            let overallTotal = 0;
+        return tableHtml;
+    }
 
-            tableBody.innerHTML = ''; 
+    function displayResult(elementId, data, successMessage, errorMessagePrefix = "Error") {
+        const resultArea = document.getElementById(elementId);
 
-            if (!data || !Array.isArray(data) || data.length === 0) {
-                console.warn("updateTable: データが空または不正です。", data);
-                totalAmountCell.textContent = '0';
-                const newRow = tableBody.insertRow();
-                const cellError = newRow.insertCell();
-                cellError.colSpan = 4;
-                cellError.textContent = data ? "データがありません。" : "データの読み込みに失敗しました。";
-                cellError.style.textAlign = "center";
-                return;
+        if (data && data.success) {
+            let displayContent = `<div class="status-success">${successMessage}</div>`;
+
+            // データの種類に応じてテーブル表示を選択
+            if (elementId === 'siteListResult' && Array.isArray(data.data)) {
+                displayContent += createSiteTable(data.data);
+            } else if (elementId === 'equipmentListResult' && Array.isArray(data.data)) {
+                displayContent += createEquipmentTable(data.data);
+            } else if (elementId === 'siteDetailsResult') {
+                // 現場詳細の場合は単一オブジェクトなので配列に変換
+                const siteArray = Array.isArray(data.data) ? data.data : [data.data];
+                displayContent += createSiteTable(siteArray); // siteDetailsResultもcreateSiteTableを使う場合
+                                                              // (ただし、詳細表示用の別テーブル関数が良い場合もある)
+            } else {
+                // その他の場合はJSON表示
+                displayContent += `<div class="json-display">${JSON.stringify(data.data, null, 2)}</div>`;
             }
 
-            data.forEach(row => {
-                const newRow = tableBody.insertRow();
-                const cellName = newRow.insertCell();
-                const cellQuantity = newRow.insertCell();
-                const cellUnitPrice = newRow.insertCell();
-                const cellSubtotal = newRow.insertCell();
-
-                const itemName = row[0] || "N/A"; // 機材名
-                const quantity = parseInt(row[1]) || 0; // 個数
-                const unitPrice = parseFloat(row[2]) || 0; // 単価
-                const subtotal = quantity * unitPrice;
-
-                cellName.textContent = itemName;
-                cellQuantity.textContent = quantity;
-                cellUnitPrice.textContent = unitPrice.toLocaleString(); 
-                cellSubtotal.textContent = subtotal.toLocaleString(); 
-
-                overallTotal += subtotal;
-            });
-
-            totalAmountCell.textContent = overallTotal.toLocaleString(); 
+            resultArea.innerHTML = displayContent;
+        } else if (data && data.error) {
+            const errorContent = `
+                <div class="status-error">${errorMessagePrefix}: ${data.error}</div>
+                ${data.data ? `<div class="json-display">${JSON.stringify(data.data, null, 2)}</div>` : ''}
+            `;
+            resultArea.innerHTML = errorContent;
+        } else if (data) {
+            const warningContent = `
+                <div style="color: orange;">完了しましたが、予期しないレスポンス形式です。</div>
+                <div class="json-display">${JSON.stringify(data, null, 2)}</div>
+            `;
+            resultArea.innerHTML = warningContent;
+        } else {
+            resultArea.innerHTML = `<div class="status-error">${errorMessagePrefix}: 通信に失敗しました。詳細はコンソールを確認してください。</div>`;
         }
+    }
 
-        // エラー処理関数
-        function onFailure(error) {
-            console.error("GASの呼び出しに失敗しました: ", error);
-            alert("処理に失敗しました。\n" + (error.message || error));
-            const tableBody = document.getElementById('equipmentTable').getElementsByTagName('tbody')[0];
-            if (document.getElementById('totalAmount')) {
-                document.getElementById('totalAmount').textContent = '0';
-            }
+    function getIdParam() {
+        const id = document.getElementById('siteDetailId').value;
+        if (!id) {
+            alert('固有IDを入力してください。');
+            throw new Error('ID parameter is missing');
         }
+        return id;
+    }
 
-        // GASの関数
-        function fetchData(formData, successCallback, errorCallback) {
-            const gasUrl = 'https://script.google.com/macros/s/AKfycbwuAZl1MbWM7L61uzva-E-AWtLH0QANr80n7v_el274LpQ7Sjmcj5qkiNXBGgkmVN03/exec';
-            fetch(gasUrl, {
-                method: 'POST',
-                body: formData
-            })
-            .then(res => {
-                if (!res.ok) {
-                    return res.text().then(text => {
-                        let errorMsg = `HTTP error! status: ${res.status}`;
-                        try {
-                            const errJson = JSON.parse(text);
-                            if (errJson && errJson.error) {
-                                errorMsg += `, message: ${errJson.error.message || text}`;
-                            } else {
-                                errorMsg += `, message: ${text}`;
-                            }
-                        } catch (e) {
-                            errorMsg += `, message: ${text}`;
-                        }
-                        throw new Error(errorMsg);
-                    });
-                }
-                return res.json();
-            })
-            .then(responseData => {
-                if (responseData && responseData.status === 'success' && Array.isArray(responseData.data)) {
-                    successCallback(responseData.data);
-                } else if (responseData && responseData.status === 'success' && responseData.data === undefined && responseData.message) {
-                    successCallback({ message: responseData.message }); 
-                } else if (Array.isArray(responseData)) {
-                    successCallback(responseData);
-                } else if (responseData && responseData.status === 'error') {
-                     console.error("GASからエラーが返されました:", responseData.message || responseData);
-                     errorCallback(new Error(responseData.message || "GAS処理エラー"));
-                }
-                else {
-                    console.warn("GASからの予期しないデータ形式です:", responseData);
-                    errorCallback(new Error("GASから予期しないデータ形式が返されました。詳細はコンソールを確認してください。"));
-                }
-            })
-            .catch(err => {
-                errorCallback(err);
-            });
-        }
-
-        // テーブル表示
-        function loadAndDisplayEquipmentData() {
-            const formData = new FormData();
-            formData.append('type', 'getEquipmentList');
-            fetchData(formData, updateTable, onFailure);
-        }
-
-        window.onload = function() {
-            loadAndDisplayEquipmentData();
-        };
-
-
-        function getIdParam() {
-            const urlParams = new URLSearchParams(window.location.search);
-            const id = urlParams.get('id');
-            if (!id) {
-                console.warn('ID parameter is missing in the URL');
-                return null;
-            }
-            return id;
-        }
-
-        function getSiteDetails() {
-            const id = getIdParam(); 
-            if (!id) {
-                alert("現場詳細の取得に必要なIDが指定されていません。");
-                return;
-            }
+    // --- 現場管理機能 ---
+    function getSiteDetails() {
+        const resultAreaId = "siteDetailsResult";
+        document.getElementById(resultAreaId).innerHTML = "<div style='text-align: center; color: #007bff;'>🔄 取得中...</div>";
+        try {
+            const id = getIdParam();
             const formData = new FormData();
             formData.append('id', id);
             formData.append('type', 'getSiteDetails');
-            fetchData(formData, (data) => {
-                console.log("Response from GAS (getSiteDetails):", data);
-                alert("取得した現場詳細:\n" + JSON.stringify(data, null, 2));
-            }, onFailure);
+
+            fetchData(formData)
+            .then(data => {
+                // siteDetailsResult で createSiteTable を使う場合、
+                // getSiteDetails が返すデータ構造が getSiteList と異なる可能性に注意
+                // getSiteDetails の返り値が単一の現場オブジェクトで、その中に equipment 配列を持つなど。
+                // その場合は、createSiteTable を詳細表示用に調整するか、別のテーブル関数を用意する。
+                // ここでは、仮に getSiteDetails も site.equipment を持つオブジェクトの配列を返すとしています。
+                // 実際の getSiteDetails の返り値に合わせて調整が必要です。
+                // もし getSiteDetails が返す data.data が現場オブジェクトの配列でないなら、
+                // displayResult内の siteDetailsResult の分岐を調整するか、
+                // siteDetails 専用のテーブル作成関数を呼び出すようにしてください。
+                // (例: displayContent += createSiteDetailTable(data.data); のように)
+                displayResult(resultAreaId, data, "現場詳細取得成功:");
+            })
+            .catch(error => {
+                displayResult(resultAreaId, null, "", `現場詳細取得失敗: ${error.message}`);
+            });
+        } catch (error) {
+             displayResult(resultAreaId, null, "", `入力エラー: ${error.message}`);
+        }
+    }
+
+    function getSiteList() {
+        const resultAreaId = "siteListResult";
+        document.getElementById(resultAreaId).innerHTML = "<div style='text-align: center; color: #007bff;'>🔄 取得中...</div>";
+        const formData = new FormData();
+        formData.append('type', 'getSiteList');
+        fetchData(formData)
+        .then(data => {
+            displayResult(resultAreaId, data, "現場リスト取得成功:");
+        })
+        .catch(error => {
+            displayResult(resultAreaId, null, "", `現場リスト取得失敗: ${error.message}`);
+        });
+    }
+
+    function registerSite() {
+        const resultAreaId = "registerSiteResult";
+        document.getElementById(resultAreaId).innerHTML = "<div style='text-align: center; color: #007bff;'>🔄 登録中...</div>";
+        const form = document.getElementById('registerSiteForm');
+        const siteName = form.elements['siteName'].value;
+
+        if (!siteName) {
+            alert("現場名を入力してください。");
+            displayResult(resultAreaId, null, "", "入力エラー: 現場名は必須です。");
+            return;
         }
 
-        function getSiteList() {
-            const formData = new FormData();
-            formData.append('type', 'getSiteList');
-            fetchData(formData, (data) => {
-                console.log("Response from GAS (getSiteList):", data);
-                alert("取得した現場リスト:\n" + JSON.stringify(data, null, 2));
-            }, onFailure);
+        if (siteEquipmentList.length === 0) {
+            alert("機材を少なくとも1つ追加してください。");
+            displayResult(resultAreaId, null, "", "入力エラー: 機材情報は必須です。");
+            return;
         }
 
-        function registerSite() {
-            const siteName = prompt("登録する現場名を入力してください:", "株式会社未来創造");
-            if (!siteName || siteName.trim() === "") {
-                alert("現場名が入力されていません。");
-                return;
-            }
+        const formData = new FormData();
+        formData.append('type', 'registerSite');
+        formData.append('name', siteName);
+        formData.append('equipment', JSON.stringify(siteEquipmentList));
 
-            const formData = new FormData();
-            formData.append('type', 'registerSite');
-            formData.append('name', siteName.trim());
-            fetchData(formData, (response) => { 
-                console.log("Response from GAS (registerSite):", response);
-                alert(response.message || "現場を登録しました。");
-            }, onFailure);
+        fetchData(formData)
+        .then(data => {
+            displayResult(resultAreaId, data, "現場登録成功:");
+            if (data.success) {
+                form.reset();
+                siteEquipmentList = [];
+                updateEquipmentDisplay();
+                updateJsonField();
+            }
+        })
+        .catch(error => {
+            displayResult(resultAreaId, null, "", `現場登録失敗: ${error.message}`);
+        });
+    }
+
+    // --- 機材管理機能 ---
+    function getEquipmentList() {
+        const resultAreaId = "equipmentListResult";
+        document.getElementById(resultAreaId).innerHTML = "<div style='text-align: center; color: #007bff;'>🔄 取得中...</div>";
+        const formData = new FormData();
+        formData.append('type', 'getEquipmentList');
+        fetchData(formData)
+        .then(data => {
+            displayResult(resultAreaId, data, "機材リスト取得成功:");
+        })
+        .catch(error => {
+            displayResult(resultAreaId, null, "", `機材リスト取得失敗: ${error.message}`);
+        });
+    }
+
+    function registerEquipment() {
+        const resultAreaId = "registerEquipmentResult";
+        document.getElementById(resultAreaId).innerHTML = "<div style='text-align: center; color: #007bff;'>🔄 登録中...</div>";
+        const form = document.getElementById('registerEquipmentForm');
+        const name = form.elements['regEqName'].value;
+        const total = form.elements['regEqTotal'].value;
+        const unitPrice = form.elements['regEqUnitPrice'].value;
+
+        if (!name || !total || !unitPrice) {
+            alert("機材名、総数、単価をすべて入力してください。");
+            displayResult(resultAreaId, null, "", "入力エラー: 機材名、総数、単価は必須です。");
+            return;
         }
 
-        function registerEquipment() {
-            const equipName = prompt("登録する機材名を入力してください:", "カメラ");
-            if (!equipName || equipName.trim() === "") {
-                alert("機材名が入力されていません。");
-                return;
-            }
-            const equipTotalStr = prompt("個数を入力してください:", "10");
-            if (!equipTotalStr || isNaN(parseInt(equipTotalStr))) {
-                alert("個数が正しく入力されていません。");
-                return;
-            }
-            const equipUnitPriceStr = prompt("単価を入力してください:", "10000");
-            if (!equipUnitPriceStr || isNaN(parseFloat(equipUnitPriceStr))) {
-                alert("単価が正しく入力されていません。");
-                return;
-            }
+        const formData = new FormData();
+        formData.append('type', 'registerEquipment');
+        formData.append('name', name);
+        formData.append('total', total);
+        formData.append('unitPrice', unitPrice);
 
-            const formData = new FormData();
-            formData.append('type', 'registerEquipment');
-            formData.append('name', equipName.trim());
-            formData.append('total', parseInt(equipTotalStr));
-            formData.append('unitPrice', parseFloat(equipUnitPriceStr));
+        fetchData(formData)
+        .then(data => {
+            displayResult(resultAreaId, data, "機材登録成功:");
+             if (data.success) form.reset();
+        })
+        .catch(error => {
+            displayResult(resultAreaId, null, "", `機材登録失敗: ${error.message}`);
+        });
+    }
 
-            fetchData(formData, (response) => { 
-                console.log("Response from GAS (registerEquipment):", response);
-                alert(response.message || "機材を登録しました。");
-                loadAndDisplayEquipmentData(); 
-            }, onFailure);
+    function changeEquipmentInfo() {
+        const resultAreaId = "changeEquipmentResult";
+        document.getElementById(resultAreaId).innerHTML = "<div style='text-align: center; color: #007bff;'>🔄 変更中...</div>";
+        const form = document.getElementById('changeEquipmentForm');
+        const name = form.elements['changeEqName'].value;
+        const quantity = form.elements['changeEqQuantity'].value;
+        const unitPrice = form.elements['changeEqUnitPrice'].value;
+
+        if (!name || !quantity || !unitPrice) {
+            alert("機材名、総数、単価をすべて入力してください。");
+            displayResult(resultAreaId, null, "", "入力エラー: 機材名、総数、単価は必須です。");
+            return;
         }
 
-    </script>
+        const formData = new FormData();
+        formData.append('type', 'changeInfo');
+        formData.append('name', name);
+        formData.append('quantity', quantity);
+        formData.append('unitPrice', unitPrice);
+
+        fetchData(formData)
+        .then(data => {
+            displayResult(resultAreaId, data, "機材情報変更成功:");
+            if (data.success) form.reset();
+        })
+        .catch(error => {
+            displayResult(resultAreaId, null, "", `機材情報変更失敗: ${error.message}`);
+        });
+    }
+
+</script>
 </body>
 </html>
