@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>現場詳細</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+     <h1 id="site-name-heading"></h1>
+    <div id="status-section" style="margin-bottom: 20px; display: flex; align-items: center; gap: 10px;">
+        <strong>ステータス: </strong>
+        <select id="status-select" class="status-select" onchange="updateStatus(this)">
+            <option value="現場前">現場前</option>
+            <option value="完了">完了</option>
+            <option value="キャンセル">キャンセル</option>
+        </select>
+    </div>
+    <p id="site-date"></p>
+
+    <div class="section">
+        <h2>使用機材リスト</h2>
+        <table id="site-details-table">
+            <thead>
+                <tr>
+                    <th>機材ID</th>
+                    <th>機材名</th>
+                    <th>使用数</th>
+                    <th>単価</th>
+                    <th>合計</th>
+                </tr>
+            </thead>
+            <tbody id="site-details-body"></tbody>
+        </table>
+        <div id="loading-details" style="display: block;">読み込み中...</div>
+    </div>
+
+    <a href="index.html">現場リストに戻る</a>
+
+    <script>
+        const GAS_URL = 'https://script.google.com/macros/s/AKfycbwxqQWDoO753aQ8avGv9NGlEV2VaGYWEy-IBiG5eiXP4B0_MGQ5Wr9g10EHQtjQKacs/exec';
+
+        // --- DOM要素の取得 ---
+        const siteNameHeading = document.getElementById('site-name-heading');
+        const siteDetailsBody = document.getElementById('site-details-body');
+        const loadingDetails = document.getElementById('loading-details');
+        const siteDateEl = document.getElementById('site-date');
+
+        let currentStatus = ''; 
+
+        document.addEventListener('DOMContentLoaded', () => {
+            const params = new URLSearchParams(window.location.search);
+            const uniqueId = params.get('id');
+            const siteName = params.get('name'); 
+
+            if (uniqueId && siteName) {
+                const siteNameDecoded = decodeURIComponent(siteName);
+                siteNameHeading.textContent = siteNameDecoded;
+                document.title = `${siteNameDecoded} - 現場詳細`;
+                loadDetails(uniqueId);
+            } else {
+                document.body.innerHTML = '<h1>エラー: 情報が不足しています。</h1><a href="index.html">リストに戻る</a>';
+            }
+        });
+
+        function setStatusStyle(status) {
+            const selectElement = document.getElementById('status-select');
+            selectElement.classList.remove('status-before', 'status-completed', 'status-canceled', 'status-default');
+            switch (status) {
+                case '現場前': selectElement.classList.add('status-before'); break;
+                case '完了': selectElement.classList.add('status-completed'); break;
+                case 'キャンセル': selectElement.classList.add('status-canceled'); break;
+                default: selectElement.classList.add('status-default'); break;
+            }
+        }
+
+        function formatDateJP(dateString) {
+            if (!dateString) return '（未設定）';
+            try {
+                const date = new Date(dateString);
+                if (isNaN(date.getTime())) return '（日付形式エラー）';
+                const year = date.getFullYear();
+                const month = date.getMonth() + 1;
+                const day = date.getDate();
+                return `${year}年${month}月${day}日`;
+            } catch (e) {
+                return dateString;
+            }
+        }
+        
+        async function loadDetails(uniqueId) {
+            try {
+                const formData = new FormData();
+                formData.append('type', 'getSiteDetails');
+                formData.append('id', uniqueId);
+
+                const response = await fetch(GAS_URL, { method: 'POST', body: formData });
+                const result = await response.json();
+                if (!result.success) throw new Error(result.error);
+                
+                const siteInfo = result.data.info;
+                const equipmentList = result.data.equipment;
+                
+                currentStatus = siteInfo.status; 
+                document.getElementById('status-select').value = currentStatus;
+                setStatusStyle(currentStatus);
+
+                const calendarIcon = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" style="width:18px;height:18px;vertical-align:middle;margin-right:6px;"><path fill-rule="evenodd" d="M6 2a1 1 0 00-1 1v1H4a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V6a2 2 0 00-2-2h-1V3a1 1 0 10-2 0v1H7V3a1 1 0 00-1-1zm0 5a1 1 0 000 2h8a1 1 0 100-2H6z" clip-rule="evenodd" /></svg>';
+                siteDateEl.innerHTML = `${calendarIcon} 現場日: <strong>${formatDateJP(siteInfo.date)}</strong>`;
+                
+                siteDetailsBody.innerHTML = '';
+                if (equipmentList && equipmentList.length > 0) {
+                    equipmentList.forEach(eq => {
+                        const row = document.createElement('tr');
+                        row.innerHTML = `
+                            <td>${eq.id || '-'}</td>
+                            <td>${eq.name || '-'}</td>
+                            <td>${eq.inUse || '-'}</td>
+                            <td>${eq.unitPrice || '-'}</td>
+                            <td>${eq.totalPrice || '-'}</td>
+                        `;
+                        siteDetailsBody.appendChild(row);
+                    });
+                } else {
+                    siteDetailsBody.innerHTML = '<tr><td colspan="5" style="text-align:center;">使用されている機材はありません。</td></tr>';
+                }
+
+            } catch (error) {
+                console.error('Error:', error);
+                siteDetailsBody.innerHTML = `<tr><td colspan="5">詳細の読み込みに失敗しました。</td></tr>`;
+            } finally {
+                loadingDetails.style.display = 'none';
+            }
+        }
+
+        async function updateStatus(selectElement) {
+            const newStatus = selectElement.value;
+            const previousStatus = currentStatus;
+            if (newStatus === previousStatus) return;
+            if (!confirm(`ステータスを「${newStatus}」に変更しますか？`)) {
+                selectElement.value = previousStatus;
+                return;
+            }
+            const params = new URLSearchParams(window.location.search);
+            const uniqueId = params.get('id');
+            try {
+                const formData = new FormData();
+                formData.append('type', 'updateStatus');
+                formData.append('id', uniqueId);
+                formData.append('status', newStatus);
+                setStatusStyle(newStatus); 
+                const response = await fetch(GAS_URL, { method: 'POST', body: formData });
+                const result = await response.json();
+                if (result.success) {
+                    currentStatus = newStatus;
+                    alert('ステータスを更新しました。');
+                } else {
+                    throw new Error(result.error || '不明なエラー');
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                alert(`更新に失敗しました: ${error.message}`);
+                selectElement.value = previousStatus;
+                setStatusStyle(previousStatus);
+            }
+        }
+    </script>
+</body>
+</html>
