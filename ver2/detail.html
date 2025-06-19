@@ -32,6 +32,12 @@
                 </tr>
             </thead>
             <tbody id="site-details-body"></tbody>
+            <tfoot>
+                <tr>
+                    <td colspan="4" style="text-align: right; font-weight: bold; border-top: 2px solid #333;">総合計</td>
+                    <td id="grand-total-amount" class="text-right" style="font-weight: bold; border-top: 2px solid #333;">0</td>
+                </tr>
+            </tfoot>
         </table>
         <div id="loading-details" style="display: block;">読み込み中...</div>
     </div>
@@ -129,7 +135,7 @@
                                 <td>${eq.id || '-'}</td>
                                 <td>${eq.name || '-'}</td>
                                 <td>${eq.inUse || '-'}</td>
-                                <td><input type="number" class="manual-price-input" placeholder="単価を手動で入力" oninput="recalculateTotal(this, ${eq.inUse}, ${index})"></td>
+                                <td><input type="number" class="manual-price-input" placeholder="単価を手動入力" oninput="recalculateTotal(this, ${eq.inUse}, ${index})"></td>
                                 <td><span id="total-price-${index}">${eq.totalPrice === '#NUM!' ? '' : (eq.totalPrice || '0')}</span></td>
                             `;
                         } else {
@@ -145,6 +151,7 @@
                 } else {
                     // データがヘッダーのみ、または空の場合
                     siteDetailsBody.innerHTML = '<tr><td colspan="5" style="text-align:center;">使用されている機材はありません。</td></tr>';
+                    updateGrandTotal();
                 }
 
             } catch (error) {
@@ -193,6 +200,25 @@
             const targetTotalCell = document.getElementById(`total-price-${index}`);
             if (targetTotalCell) {
                 targetTotalCell.textContent = newTotal.toLocaleString();
+            }
+            updateGrandTotal();
+        }
+        function updateGrandTotal() {
+            let grandTotal = 0;
+            const rows = document.querySelectorAll('#site-details-body tr');
+
+            rows.forEach(row => {
+                const totalCell = row.cells[row.cells.length - 1];
+                if (totalCell) {
+                    const cellValue = parseFloat(totalCell.textContent.replace(/,/g, '')) || 0;
+                    grandTotal += cellValue;
+                }
+            });
+
+            // 計算結果を表示欄に反映
+            const grandTotalElement = document.getElementById('grand-total-amount');
+            if (grandTotalElement) {
+                grandTotalElement.textContent = grandTotal.toLocaleString();
             }
         }
     </script>
