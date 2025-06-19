@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>現場詳細</title>
     <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="print.css" media="print">
 </head>
 <body>
      <h1 id="site-name-heading"></h1>
@@ -33,6 +34,12 @@
             <tbody id="site-details-body"></tbody>
         </table>
         <div id="loading-details" style="display: block;">読み込み中...</div>
+    </div>
+
+    <div id="pdf-export-button" style="margin-top: 20px;">
+        <button type="button" onclick="window.print()" style="padding: 10px 20px; font-size: 1em; cursor: pointer; background-color: gray;">
+            PDFとして出力
+        </button>
     </div>
 
     <a href="index.html">現場リストに戻る</a>
@@ -109,21 +116,38 @@
                 siteDateEl.innerHTML = `${calendarIcon} 現場日: <strong>${formatDateJP(siteInfo.date)}</strong>`;
                 
                 siteDetailsBody.innerHTML = '';
-                if (equipmentList && equipmentList.length > 0) {
-                    equipmentList.forEach(eq => {
-                        const row = document.createElement('tr');
-                        row.innerHTML = `
-                            <td>${eq.id || '-'}</td>
-                            <td>${eq.name || '-'}</td>
-                            <td>${eq.inUse || '-'}</td>
-                            <td>${eq.unitPrice || '-'}</td>
-                            <td>${eq.totalPrice || '-'}</td>
-                        `;
-                        siteDetailsBody.appendChild(row);
+                
+                // ★★★ ここからが修正箇所 ★★★
+                // equipmentListが存在し、2件以上のデータ（ヘッダー+データ1件以上）があるか確認
+                if (equipmentList && equipmentList.length > 1) {
+                    // .slice(1) を使って、配列の1番目（ヘッダー）を無視して2番目からループ処理する
+                    const dataRows = equipmentList.slice(1);
+
+                    dataRows.forEach((eq, index) => {
+                        const row = siteDetailsBody.insertRow();
+                        if (eq.unitPrice === 'manual') {
+                            row.innerHTML = `
+                                <td>${eq.id || '-'}</td>
+                                <td>${eq.name || '-'}</td>
+                                <td>${eq.inUse || '-'}</td>
+                                <td><input type="number" class="manual-price-input" placeholder="単価入力" oninput="recalculateTotal(this, ${eq.inUse}, ${index})"></td>
+                                <td><span id="total-price-${index}">${eq.totalPrice === '#NUM!' ? '' : (eq.totalPrice || '0')}</span></td>
+                            `;
+                        } else {
+                            row.innerHTML = `
+                                <td>${eq.id || '-'}</td>
+                                <td>${eq.name || '-'}</td>
+                                <td>${eq.inUse || '-'}</td>
+                                <td>${eq.unitPrice || '-'}</td>
+                                <td>${eq.totalPrice === '#NUM!' ? '' : (eq.totalPrice || '-')}</td>
+                            `;
+                        }
                     });
                 } else {
+                    // データがヘッダーのみ、または空の場合
                     siteDetailsBody.innerHTML = '<tr><td colspan="5" style="text-align:center;">使用されている機材はありません。</td></tr>';
                 }
+                // ★★★ ここまでが修正箇所 ★★★
 
             } catch (error) {
                 console.error('Error:', error);
@@ -162,6 +186,20 @@
                 alert(`更新に失敗しました: ${error.message}`);
                 selectElement.value = previousStatus;
                 setStatusStyle(previousStatus);
+            }
+        }
+        function recalculateTotal(inputElement, quantity, index) {
+            // 1. 入力された単価を取得（空の場合は0として扱う）
+            const manualPrice = parseFloat(inputElement.value) || 0;
+
+            // 2. 使用数（quantity）と掛け合わせて合計を計算
+            const newTotal = manualPrice * quantity;
+
+            // 3. 対応する合計金額のセルを見つけて、計算結果で表示を上書きする
+            const targetTotalCell = document.getElementById(`total-price-${index}`);
+            if (targetTotalCell) {
+                // toLocaleString() を使って3桁区切りの見やすい形式にする
+                targetTotalCell.textContent = newTotal.toLocaleString();
             }
         }
     </script>
