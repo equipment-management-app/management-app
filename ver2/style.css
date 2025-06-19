@@ -212,3 +212,16 @@ body { font-family: sans-serif; margin: 20px; background-color: #f4f4f9; }
         .status-completed { background-color: #28a745; border-color: #218838; }
         .status-canceled { background-color: #dc3545; border-color: #c82333; }
         .status-default { background-color: #6c757d; border-color: #5a6268; }
+    
+.manual-price-input {
+    border: none !important;
+    background-color: transparent !important;
+
+    outline: none;
+
+    font-family: inherit;
+    font-size: inherit;
+    width: 100%; 
+    padding: 0;
+    margin: 0;
+}
