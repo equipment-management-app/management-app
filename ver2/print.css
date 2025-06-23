@@ -1,14 +1,23 @@
 /* 印刷時に不要な要素をすべて非表示にする */
 #status-section,
 a[href="index.html"],
-#pdf-export-button {
+#pdf-export-button,
+#bulk-return-section,
+/* ★「すべて返却」のセクションを追加 */
+#site-details-table th:nth-child(6),
+/* ★テーブルヘッダーの6列目（返却チェック）を追加 */
+#site-details-table td:nth-child(6)
+
+/* ★テーブルボディの6列目（返却チェック）を追加 */
+    {
     display: none !important;
 }
 
 /* 印刷用に全体の余白を調整 */
 body {
     margin: 10mm;
-    background-color: #fff; /* 背景を白に */
+    background-color: #fff;
+    /* 背景を白に */
 }
 
 /* セクションの影をなくす */

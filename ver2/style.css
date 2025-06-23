@@ -1,93 +1,122 @@
-body { 
-    font-family: sans-serif; 
-    margin: 20px; 
-    background-color: #f4f4f9; 
+body {
+    font-family: sans-serif;
+    margin: 20px;
+    background-color: #f4f4f9;
 }
-h1, h2 { 
-    color: #333; 
-    border-bottom: 2px solid #5a5a5a; 
-    padding-bottom: 5px; 
+
+h1,
+h2 {
+    color: #333;
+    border-bottom: 2px solid #5a5a5a;
+    padding-bottom: 5px;
 }
 
 /* デフォルト（モバイル）のスタイル：縦並びにする */
-.container { 
+.container {
     display: flex;
     flex-direction: column;
-    gap: 20px; 
+    gap: 20px;
 }
 
 /* 画面幅が768px以上の場合に適用されるスタイル：2列にする */
 @media (min-width: 768px) {
     .container {
-        display: grid; 
-        grid-template-columns: 1fr 1fr; 
+        display: grid;
+        grid-template-columns: 1fr 1fr;
     }
 }
 
 
-.section { 
-    background-color: #fff; 
-    padding: 20px; 
-    border-radius: 8px; 
-    box-shadow: 0 2px 4px rgba(0,0,0,0.1); 
+.section {
+    background-color: #fff;
+    padding: 20px;
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 }
-table { 
-    width: 100%; 
-    border-collapse: collapse; 
-    margin-top: 15px; 
+
+table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 15px;
 }
-th, td { 
-    border: 1px solid #ddd; 
-    padding: 8px; 
-    text-align: left; 
+
+th,
+td {
+    border: 1px solid #ddd;
+    padding: 8px;
+    text-align: left;
 }
-thead { 
-    background-color: #e9ecef; 
+
+thead {
+    background-color: #e9ecef;
 }
-tbody tr:hover { 
-    background-color: #f1f1f1; 
-    cursor: pointer; 
+
+tbody tr:hover {
+    background-color: #f1f1f1;
+    cursor: pointer;
 }
 
 /* フォームのスタイル */
-form { 
-    display: flex; 
-    flex-direction: column; 
-    gap: 15px; 
-}
-input[type="text"], input[type="date"], input[type="number"] { 
-    width: 100%; 
-    padding: 8px; 
-    border: 1px solid #ccc; 
-    border-radius: 4px; 
-    box-sizing: border-box; 
-}
-button { 
-    padding: 10px 15px; 
-    border: none; 
-    border-radius: 4px; 
-    cursor: pointer; 
-    color: white; 
-    font-weight: bold; 
-}
-.btn-main { background-color: #007bff; }
-.btn-main:hover { background-color: #0056b3; }
-.btn-add { background-color: #28a745; }
-.btn-add:hover { background-color: #218838; }
-.btn-clear { background-color: #6c757d; }
-.btn-clear:hover { background-color: #5a6268; }
-
-#equipmentItems .item { 
-    display: flex; 
-    justify-content: space-between; 
-    align-items: center; 
-    background-color: #e2e3e5; 
-    padding: 5px 10px; 
-    border-radius: 4px; 
-    margin-bottom: 5px; 
+form {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
 }
 
-#equipmentItems .remove-btn { 
+input[type="text"],
+input[type="date"],
+input[type="number"] {
+    width: 100%;
+    padding: 8px;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    box-sizing: border-box;
+}
+
+button {
+    padding: 10px 15px;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    color: white;
+    font-weight: bold;
+}
+
+.btn-main {
+    background-color: #007bff;
+}
+
+.btn-main:hover {
+    background-color: #0056b3;
+}
+
+.btn-add {
+    background-color: #28a745;
+}
+
+.btn-add:hover {
+    background-color: #218838;
+}
+
+.btn-clear {
+    background-color: #6c757d;
+}
+
+.btn-clear:hover {
+    background-color: #5a6268;
+}
+
+#equipmentItems .item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background-color: #e2e3e5;
+    padding: 5px 10px;
+    border-radius: 4px;
+    margin-bottom: 5px;
+}
+
+#equipmentItems .remove-btn {
     background-color: transparent;
     border: none;
     color: #dc3545;
@@ -106,17 +135,21 @@ button {
     padding-top: 15px;
     border-top: 1px solid #eee;
 }
+
 .pagination-controls .buttons button {
     background-color: #6c757d;
     margin-left: 5px;
 }
+
 .pagination-controls .buttons button:hover {
     background-color: #5a6268;
 }
+
 .pagination-controls .buttons button:disabled {
     background-color: #ccc;
     cursor: not-allowed;
 }
+
 .pagination-info {
     font-size: 0.9em;
     color: #666;
@@ -126,6 +159,7 @@ button {
 .search-box {
     margin-bottom: 15px;
 }
+
 .search-box input {
     width: 100%;
     padding: 10px;
@@ -137,19 +171,19 @@ button {
 
 /* --- 機材検索の候補を表示するスタイルを追加 --- */
 .equipment-search-container {
-    position: relative; 
+    position: relative;
 }
 
 .search-suggestions {
-    display: none; 
+    display: none;
     position: absolute;
     border: 1px solid #ddd;
     background-color: white;
     width: 100%;
     max-height: 150px;
     overflow-y: auto;
-    z-index: 10; 
-    box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+    z-index: 10;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
     border-radius: 4px;
 }
 
@@ -166,49 +200,169 @@ button {
 .status-text {
     font-weight: bold;
 }
+
 .status-text-before {
-    color: #007bff; 
+    color: #007bff;
 }
+
 .status-text-completed {
-    color: #28a745; 
+    color: #28a745;
 }
+
 .status-text-canceled {
-    color: #dc3545; 
+    color: #dc3545;
 }
+
 .status-text-default {
-    color: #6c757d; 
+    color: #6c757d;
 }
 
 /* ------------------------------------------------------ここからdetail用のスタイル----------------------------------------------------------------------------- */
 
-body { font-family: sans-serif; margin: 20px; background-color: #f4f4f9; }
-        h1 { color: #333; border-bottom: 2px solid #5a5a5a; padding-bottom: 5px; }
-        #site-date { display: inline-block; background-color: #e9ecef; color: #343a40; font-size: 1.1em; font-weight: bold; padding: 6px 12px; border-radius: 16px; margin-top: -5px; margin-bottom: 20px; }
-        #site-date svg { display: inline-block; vertical-align: middle; margin-right: 6px; width: 18px; height: 18px; }
-        .section { background-color: #fff; padding: 20px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
-        table { width: 100%; border-collapse: collapse; margin-top: 15px; }
-        th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }
-        thead { background-color: #e9ecef; }
-        a { display: inline-block; margin-top: 20px; color: #007bff; text-decoration: none; }
-        a:hover { text-decoration: underline; }
-        .status-select {
-            padding: 8px 12px;
-            border-radius: 16px; 
-            border: 2px solid;   
-            font-weight: bold;
-            color: white;
-            -webkit-appearance: none; 
-            -moz-appearance: none;    
-            appearance: none;         
-            background-image: url('data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%22292.4%22%20height%3D%22292.4%22%3E%3Cpath%20fill%3D%22%23ffffff%22%20d%3D%22M287%2069.4a17.6%2017.6%200%200%200-13-5.4H18.4c-5%200-9.3%201.8-12.9%205.4A17.6%2017.6%200%200%200%200%2082.2c0%205%201.8%209.3%205.4%2012.9l128%20127.9c3.6%203.6%207.8%205.4%2012.8%205.4s9.2-1.8%2012.8-5.4L287%2095c3.5-3.5%205.4-7.8%205.4-12.8%200-5-1.9-9.2-5.5-12.8z%22%2F%3E%3C%2Fsvg%3E');
-            background-repeat: no-repeat;
-            background-position: right 12px center;
-            background-size: 10px;
-            padding-right: 30px; 
-        }
+body {
+    font-family: sans-serif;
+    margin: 20px;
+    background-color: #f4f4f9;
+}
 
-        /* ステータスごとの色分け */
-        .status-before { background-color: #007bff; border-color: #0069d9; }
-        .status-completed { background-color: #28a745; border-color: #218838; }
-        .status-canceled { background-color: #dc3545; border-color: #c82333; }
-        .status-default { background-color: #6c757d; border-color: #5a6268; }
+h1 {
+    color: #333;
+    border-bottom: 2px solid #5a5a5a;
+    padding-bottom: 5px;
+}
+
+#site-date {
+    display: inline-block;
+    background-color: #e9ecef;
+    color: #343a40;
+    font-size: 1.1em;
+    font-weight: bold;
+    padding: 6px 12px;
+    border-radius: 16px;
+    margin-top: -5px;
+    margin-bottom: 20px;
+}
+
+#site-date svg {
+    display: inline-block;
+    vertical-align: middle;
+    margin-right: 6px;
+    width: 18px;
+    height: 18px;
+}
+
+.section {
+    background-color: #fff;
+    padding: 20px;
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 15px;
+}
+
+th,
+td {
+    border: 1px solid #ddd;
+    padding: 8px;
+    text-align: left;
+}
+
+thead {
+    background-color: #e9ecef;
+}
+
+a {
+    display: inline-block;
+    margin-top: 20px;
+    color: #007bff;
+    text-decoration: none;
+}
+
+a:hover {
+    text-decoration: underline;
+}
+
+.status-select {
+    padding: 8px 12px;
+    border-radius: 16px;
+    border: 2px solid;
+    font-weight: bold;
+    color: white;
+    -webkit-appearance: none;
+    -moz-appearance: none;
+    appearance: none;
+    background-image: url('data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%22292.4%22%20height%3D%22292.4%22%3E%3Cpath%20fill%3D%22%23ffffff%22%20d%3D%22M287%2069.4a17.6%2017.6%200%200%200-13-5.4H18.4c-5%200-9.3%201.8-12.9%205.4A17.6%2017.6%200%200%200%200%2082.2c0%205%201.8%209.3%205.4%2012.9l128%20127.9c3.6%203.6%207.8%205.4%2012.8%205.4s9.2-1.8%2012.8-5.4L287%2095c3.5-3.5%205.4-7.8%205.4-12.8%200-5-1.9-9.2-5.5-12.8z%22%2F%3E%3C%2Fsvg%3E');
+    background-repeat: no-repeat;
+    background-position: right 12px center;
+    background-size: 10px;
+    padding-right: 30px;
+}
+
+/* ステータスごとの色分け */
+.status-before {
+    background-color: #007bff;
+    border-color: #0069d9;
+}
+
+.status-completed {
+    background-color: #28a745;
+    border-color: #218838;
+}
+
+.status-canceled {
+    background-color: #dc3545;
+    border-color: #c82333;
+}
+
+.status-default {
+    background-color: #6c757d;
+    border-color: #5a6268;
+}
+
+/* ======== index.htmlのヘッダー用に追加 ======== */
+
+.page-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 30px;
+    padding-bottom: 1rem;
+    /* EQList.htmlのスタイルに合わせてパディングを調整 (16px) */
+    border-bottom-width: 2px;
+    /* EQList.htmlのスタイルに合わせて線の太さを指定 */
+    border-color: #d1d5db;
+    /* EQList.htmlのスタイルに合わせて線の色を明るいグレーに変更 (Tailwind gray-400) */
+}
+
+.page-header h1 {
+    margin: 0;
+    border-bottom: none;
+    /* 個別の下線を削除 */
+}
+
+.nav-button {
+    display: inline-block;
+    padding: 0.5rem 1rem;
+    /* EQList.htmlのスタイルに合わせてパディングを調整 (py-2 px-4) */
+    background-color: #3b82f6;
+    /* EQList.htmlのスタイルに合わせてボタンを青色に変更 (Tailwind blue-500) */
+    color: white;
+    font-weight: 600;
+    /* font-semibold */
+    text-decoration: none;
+    /* リンクの下線を削除 */
+    border-radius: 0.5rem;
+    /* rounded-lg */
+    box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+    /* shadow-md */
+    transition: background-color 0.15s ease-in-out;
+}
+
+.nav-button:hover {
+    background-color: #2563eb;
+    /* EQList.htmlのホバー色 (Tailwind blue-600) */
+}

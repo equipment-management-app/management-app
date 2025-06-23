@@ -1,13 +1,18 @@
 <!DOCTYPE html>
 <html lang="ja">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>現場管理システム</title>
     <link rel="stylesheet" href="style.css">
 </head>
+
 <body>
-    <h1 style="text-align: center; margin-bottom: 30px;">現場管理システム</h1>
+    <div class="page-header">
+        <h1>現場管理システム</h1>
+        <a href="EQList.html" class="nav-button">機材管理ページへ</a>
+    </div>
 
     <div class="container">
         <div class="section">
@@ -65,14 +70,17 @@
                             <input type="number" id="equipmentInUse" value="1" min="1">
                         </div>
                     </div>
-                    <button type="button" class="btn-add" onclick="addEquipmentToSite()" style="margin-top: 10px; width: 100%;">この機材を追加</button>
+                    <button type="button" class="btn-add" onclick="addEquipmentToSite()"
+                        style="margin-top: 10px; width: 100%;">この機材を追加</button>
 
                     <div id="equipmentList" style="margin-top: 15px;">
                         <strong>追加済み機材:</strong>
-                        <div id="equipmentItems" style="min-height: 50px; background-color: #fff; padding: 10px; border: 1px solid #ccc; border-radius: 4px; margin-top: 5px;">
+                        <div id="equipmentItems"
+                            style="min-height: 50px; background-color: #fff; padding: 10px; border: 1px solid #ccc; border-radius: 4px; margin-top: 5px;">
                             <span style="color: #888;">機材が追加されるとここに表示されます</span>
                         </div>
-                        <button type="button" class="btn-clear" onclick="clearEquipmentList()" style="margin-top: 5px; font-size: 0.8em; padding: 5px 10px;">リストをクリア</button>
+                        <button type="button" class="btn-clear" onclick="clearEquipmentList()"
+                            style="margin-top: 5px; font-size: 0.8em; padding: 5px 10px;">リストをクリア</button>
                     </div>
                 </div>
                 <button type="button" class="btn-main" onclick="registerSite()">この内容で現場を登録</button>
@@ -80,7 +88,7 @@
             <div id="registerSiteResult" style="margin-top: 15px;"></div>
         </div>
     </div>
-    
+
     <script>
         const GAS_URL = 'https://script.google.com/macros/s/AKfycbwxqQWDoO753aQ8avGv9NGlEV2VaGYWEy-IBiG5eiXP4B0_MGQ5Wr9g10EHQtjQKacs/exec';
 
@@ -127,7 +135,7 @@
                 console.error("機材マスターリストの取得に失敗:", error);
             }
         }
-        
+
         function showEquipmentSuggestions() {
             const inputText = equipmentNameInput.value.toLowerCase();
             equipmentSuggestionsDiv.innerHTML = '';
@@ -149,12 +157,12 @@
                 equipmentSuggestionsDiv.style.display = 'none';
             }
         }
-        
+
         // 候補クリック時の動作を変更
         function selectEquipmentSuggestion(name) {
-            equipmentNameInput.value = name; 
-            equipmentSuggestionsDiv.style.display = 'none'; 
-            document.getElementById('equipmentInUse').focus(); 
+            equipmentNameInput.value = name;
+            equipmentSuggestionsDiv.style.display = 'none';
+            document.getElementById('equipmentInUse').focus();
         }
 
         function addEquipmentToSite() {
@@ -184,7 +192,7 @@
         }
 
 
-        async function loadSiteList(){
+        async function loadSiteList() {
             siteListBody.innerHTML = '';
             loadingSites.style.display = 'block';
             document.getElementById('siteListPaginationControls').style.display = 'none';
@@ -194,7 +202,7 @@
                 const response = await fetch(GAS_URL, { method: 'POST', body: formData });
                 const result = await response.json();
                 if (!result.success) throw new Error(result.error);
-                fullSiteListData = result.data.filter(site => !isNaN(parseInt(site.id))).reverse(); 
+                fullSiteListData = result.data.filter(site => !isNaN(parseInt(site.id))).reverse();
                 applyFilterAndRender();
             } catch (error) {
                 console.error('Error:', error);
@@ -203,7 +211,7 @@
                 loadingSites.style.display = 'none';
             }
         }
-        function applyFilterAndRender(){
+        function applyFilterAndRender() {
             const searchTerm = searchInput.value.toLowerCase();
             const hideCompleted = document.getElementById('hide-completed-checkbox').checked;
 
@@ -214,22 +222,22 @@
             }
 
             // ステータスで絞り込んだ結果(tempData)に対して、さらに検索キーワードで絞り込む
-            filteredSiteListData = searchTerm 
-                ? tempData.filter(site => site.name.toLowerCase().includes(searchTerm)) 
-                : tempData; 
+            filteredSiteListData = searchTerm
+                ? tempData.filter(site => site.name.toLowerCase().includes(searchTerm))
+                : tempData;
 
             currentSiteListPage = 1;
             renderSiteListPage();
         }
         // 追加: 日付を「yyyy年MM月dd日」形式に変換する
         function formatDateJP(dateString) {
-            if (!dateString) return '—'; 
+            if (!dateString) return '—';
             try {
                 const date = new Date(dateString);
-                if (isNaN(date.getTime())) return '—'; 
-                
+                if (isNaN(date.getTime())) return '—';
+
                 const year = date.getFullYear();
-                const month = date.getMonth() + 1; 
+                const month = date.getMonth() + 1;
                 const day = date.getDate();
                 return `${year}年${month}月${day}日`;
             } catch (e) {
@@ -258,7 +266,7 @@
             const startIndex = (currentSiteListPage - 1) * siteListItemsPerPage;
             const endIndex = startIndex + siteListItemsPerPage;
             const paginatedData = filteredSiteListData.slice(startIndex, endIndex);
-            
+
             paginatedData.forEach(site => {
                 const row = document.createElement('tr');
                 const siteNameEncoded = encodeURIComponent(site.name);
@@ -274,7 +282,7 @@
             });
             updateSiteListPaginationControls();
         }
-        function updateSiteListPaginationControls(){
+        function updateSiteListPaginationControls() {
             const controlsContainer = document.getElementById('siteListPaginationControls');
             const infoDiv = document.getElementById('siteListInfo');
             const prevButton = document.getElementById('prevSitePageButton');
@@ -291,20 +299,20 @@
             const endItem = Math.min(startItem + siteListItemsPerPage - 1, filteredSiteListData.length);
             infoDiv.textContent = `全 ${filteredSiteListData.length} 件中 ${startItem} - ${endItem} 件を表示`;
         }
-        function nextSitePage(){
+        function nextSitePage() {
             const totalPages = Math.ceil(filteredSiteListData.length / siteListItemsPerPage);
             if (currentSiteListPage < totalPages) {
                 currentSiteListPage++;
                 renderSiteListPage();
             }
         }
-        function prevSitePage(){
+        function prevSitePage() {
             if (currentSiteListPage > 1) {
                 currentSiteListPage--;
                 renderSiteListPage();
             }
         }
-        function updateEquipmentDisplay(){
+        function updateEquipmentDisplay() {
             const itemsDiv = document.getElementById('equipmentItems');
             if (siteEquipmentList.length === 0) {
                 itemsDiv.innerHTML = '<span style="color: #888;">機材が追加されるとここに表示されます</span>';
@@ -312,17 +320,17 @@
             }
             itemsDiv.innerHTML = siteEquipmentList.map((item, index) => `<div class="item"><span>${item.name} (使用数: ${item.inUse})</span><button class="remove-btn" onclick="removeEquipmentFromSite(${index})">×</button></div>`).join('');
         }
-        function removeEquipmentFromSite(index){
+        function removeEquipmentFromSite(index) {
             siteEquipmentList.splice(index, 1);
             updateEquipmentDisplay();
         }
-        function clearEquipmentList(){
+        function clearEquipmentList() {
             if (siteEquipmentList.length > 0 && confirm("追加した機材をすべてクリアしますか？")) {
                 siteEquipmentList = [];
                 updateEquipmentDisplay();
             }
         }
-        async function registerSite(){
+        async function registerSite() {
             const siteName = document.getElementById('siteName').value.trim();
             const siteDate = document.getElementById('siteDate').value;
             if (!siteName || !siteDate) { alert("現場名と現場日を入力してください。"); return; }
@@ -350,13 +358,13 @@
                 registerSiteResultArea.innerHTML = `<p style="color: red;">登録に失敗しました: ${error.message}</p>`;
             }
         }
-        document.addEventListener('DOMContentLoaded', function() {
+        document.addEventListener('DOMContentLoaded', function () {
             const equipmentNameInput = document.getElementById('equipmentName');
             const equipmentInUseInput = document.getElementById('equipmentInUse');
             const handleEnterKey = (event) => {
                 if (event.key === 'Enter') {
-                    event.preventDefault(); 
-                    addEquipmentToSite();   
+                    event.preventDefault();
+                    addEquipmentToSite();
                 }
             };
             equipmentNameInput.addEventListener('keydown', handleEnterKey);
@@ -364,4 +372,5 @@
         });
     </script>
 </body>
+
 </html>

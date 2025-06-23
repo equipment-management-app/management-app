@@ -1,0 +1,586 @@
+<!DOCTYPE html>
+<html lang="ja">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>機材管理システム</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        /* Custom scrollbar for better aesthetics (optional) */
+        ::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: #f1f1f1;
+            border-radius: 10px;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: #888;
+            border-radius: 10px;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: #555;
+        }
+
+        .modal {
+            display: none;
+            /* Hidden by default */
+            position: fixed;
+            /* Stay in place */
+            z-index: 1000;
+            /* Sit on top */
+            left: 0;
+            top: 0;
+            width: 100%;
+            /* Full width */
+            height: 100%;
+            /* Full height */
+            overflow: auto;
+            /* Enable scroll if needed */
+            background-color: rgba(0, 0, 0, 0.5);
+            /* Black w/ opacity */
+        }
+
+        .modal-content {
+            background-color: #fefefe;
+            margin: 15% auto;
+            /* 15% from the top and centered */
+            padding: 20px;
+            border: 1px solid #888;
+            width: 80%;
+            /* Could be more or less, depending on screen size */
+            max-width: 500px;
+            border-radius: 0.5rem;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+
+        .loading-overlay {
+            display: none;
+            position: fixed;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(255, 255, 255, 0.7);
+            z-index: 9999;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .loader {
+            border: 8px solid #f3f3f3;
+            /* Light grey */
+            border-top: 8px solid #3498db;
+            /* Blue */
+            border-radius: 50%;
+            width: 60px;
+            height: 60px;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            0% {
+                transform: rotate(0deg);
+            }
+
+            100% {
+                transform: rotate(360deg);
+            }
+        }
+    </style>
+</head>
+
+<body class="bg-gray-100 font-sans antialiased text-gray-800">
+
+    <div id="loadingOverlay" class="loading-overlay">
+        <div class="loader"></div>
+        <p class="ml-4 text-lg font-semibold text-gray-700">処理中...</p>
+    </div>
+
+    <div id="customModal" class="modal">
+        <div class="modal-content">
+            <div class="flex justify-between items-center mb-4">
+                <h3 id="modalTitle" class="text-xl font-semibold">通知</h3>
+                <button onclick="closeModal()" class="text-gray-500 hover:text-gray-700 text-2xl">&times;</button>
+            </div>
+            <p id="modalMessage" class="mb-6"></p>
+            <div id="modalActions" class="flex justify-end space-x-3">
+                <button id="modalOkButton" onclick="closeModal()"
+                    class="bg-blue-500 hover:bg-blue-600 text-white font-semibold py-2 px-4 rounded-lg shadow-md transition duration-150">OK</button>
+                <button id="modalConfirmButton"
+                    class="bg-green-500 hover:bg-green-600 text-white font-semibold py-2 px-4 rounded-lg shadow-md transition duration-150"
+                    style="display:none;">確認</button>
+                <button id="modalCancelButton" onclick="closeModal()"
+                    class="bg-gray-300 hover:bg-gray-400 text-gray-800 font-semibold py-2 px-4 rounded-lg shadow-md transition duration-150"
+                    style="display:none;">キャンセル</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="container mx-auto p-4 sm:p-6 lg:p-8">
+        <header class="flex justify-between items-center mb-8 pb-4 border-b-2 border-gray-400">
+            <h1 class="text-4xl font-bold text-blue-600">機材管理システム</h1>
+            <a href="index.html"
+                class="bg-blue-500 hover:bg-blue-600 text-white font-semibold py-2 px-4 rounded-lg shadow-md transition duration-150">現場管理ページへ</a>
+        </header>
+
+        <div id="equipmentManagement">
+            <div class="bg-white p-6 rounded-xl shadow-xl mb-8">
+                <h2 class="text-2xl font-semibold text-gray-700 mb-6 border-b pb-3">機材リスト</h2>
+                <div id="equipmentListResult"
+                    class="result-area mt-4 p-4 bg-gray-50 rounded-lg border border-gray-200 min-h-[100px] overflow-x-auto">
+                    ここに機材リストが表示されます。</div>
+                <div id="eqListPaginationControls" class="flex justify-between items-center mt-4"
+                    style="display: none;">
+                    <div id="eqListInfo" class="text-sm text-gray-600"></div>
+                    <div class="flex space-x-2">
+                        <button id="prevEqPageButton" onclick="prevEqPage()"
+                            class="bg-gray-300 hover:bg-gray-400 text-gray-800 font-semibold py-2 px-4 rounded-lg shadow-md transition duration-150 disabled:opacity-50 disabled:cursor-not-allowed">前へ</button>
+                        <button id="nextEqPageButton" onclick="nextEqPage()"
+                            class="bg-gray-300 hover:bg-gray-400 text-gray-800 font-semibold py-2 px-4 rounded-lg shadow-md transition duration-150 disabled:opacity-50 disabled:cursor-not-allowed">次へ</button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="grid md:grid-cols-2 gap-8">
+                <div class="bg-white p-6 rounded-xl shadow-xl">
+                    <h2 class="text-2xl font-semibold text-gray-700 mb-6 border-b pb-3">➕ 機材登録</h2>
+                    <form id="registerEquipmentForm" class="space-y-4">
+                        <div>
+                            <label for="regEqName" class="block text-sm font-medium text-gray-700 mb-1">機材名:</label>
+                            <input type="text" id="regEqName" name="regEqName" required
+                                class="w-full p-3 border border-gray-300 rounded-lg shadow-sm focus:ring-blue-500 focus:border-blue-500">
+                        </div>
+                        <div>
+                            <label for="regEqTotal" class="block text-sm font-medium text-gray-700 mb-1">総数:</label>
+                            <input type="number" id="regEqTotal" name="regEqTotal" required
+                                class="w-full p-3 border border-gray-300 rounded-lg shadow-sm focus:ring-blue-500 focus:border-blue-500">
+                        </div>
+                        <div>
+                            <label for="regEqUnitPrice" class="block text-sm font-medium text-gray-700 mb-1">単価
+                                (¥):</label>
+                            <input type="number" id="regEqUnitPrice" name="regEqUnitPrice" required
+                                class="w-full p-3 border border-gray-300 rounded-lg shadow-sm focus:ring-blue-500 focus:border-blue-500">
+                        </div>
+                        <button type="button" onclick="registerEquipment();"
+                            class="w-full bg-green-500 hover:bg-green-600 text-white font-bold py-3 px-6 rounded-lg shadow-md transition duration-150 inline-flex items-center justify-center">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" viewBox="0 0 20 20"
+                                fill="currentColor">
+                                <path
+                                    d="M17.414 2.586a2 2 0 00-2.828 0L7 10.172V13h2.828l7.586-7.586a2 2 0 000-2.828z" />
+                                <path fill-rule="evenodd"
+                                    d="M2 6a2 2 0 012-2h4a1 1 0 010 2H4v10h10v-4a1 1 0 112 0v4a2 2 0 01-2 2H4a2 2 0 01-2-2V6z"
+                                    clip-rule="evenodd" />
+                            </svg>
+                            機材登録
+                        </button>
+                    </form>
+                    <div id="registerEquipmentResult"
+                        class="result-area mt-6 p-4 bg-gray-50 rounded-lg border border-gray-200 min-h-[100px] overflow-x-auto">
+                        ここに機材登録の結果が表示されます。</div>
+                </div>
+
+                <div class="bg-white p-6 rounded-xl shadow-xl">
+                    <h2 class="text-2xl font-semibold text-gray-700 mb-6 border-b pb-3">✏️ 機材情報変更</h2>
+                    <form id="changeEquipmentForm" class="space-y-4">
+                        <div>
+                            <label for="changeEqName" class="block text-sm font-medium text-gray-700 mb-1">機材名
+                                (変更対象):</label>
+                            <input type="text" id="changeEqName" name="changeEqName" list="equipmentNameList" required
+                                class="w-full p-3 border border-gray-300 rounded-lg shadow-sm focus:ring-blue-500 focus:border-blue-500"
+                                placeholder="文字を入力して検索・選択...">
+                            <datalist id="equipmentNameList">
+                            </datalist>
+                        </div>
+                        <div>
+                            <label for="changeEqQuantity"
+                                class="block text-sm font-medium text-gray-700 mb-1">新しい総数:</label>
+                            <input type="number" id="changeEqQuantity" name="changeEqQuantity" required
+                                class="w-full p-3 border border-gray-300 rounded-lg shadow-sm focus:ring-blue-500 focus:border-blue-500">
+                        </div>
+                        <div>
+                            <label for="changeEqUnitPrice" class="block text-sm font-medium text-gray-700 mb-1">新しい単価
+                                (¥):</label>
+                            <input type="number" id="changeEqUnitPrice" name="changeEqUnitPrice" required
+                                class="w-full p-3 border border-gray-300 rounded-lg shadow-sm focus:ring-blue-500 focus:border-blue-500">
+                        </div>
+                        <button type="button" onclick="changeEquipmentInfo();"
+                            class="w-full bg-yellow-500 hover:bg-yellow-600 text-white font-bold py-3 px-6 rounded-lg shadow-md transition duration-150 inline-flex items-center justify-center">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" viewBox="0 0 20 20"
+                                fill="currentColor">
+                                <path
+                                    d="M13.586 3.586a2 2 0 112.828 2.828l-.793.793-2.828-2.828.793-.793zM11.379 5.793L3 14.172V17h2.828l8.38-8.379-2.83-2.828z" />
+                            </svg>
+                            情報変更
+                        </button>
+                    </form>
+                    <div id="changeEquipmentResult"
+                        class="result-area mt-6 p-4 bg-gray-50 rounded-lg border border-gray-200 min-h-[100px] overflow-x-auto">
+                        ここに機材情報変更の結果が表示されます。</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const GAS_URL = 'https://script.google.com/macros/s/AKfycbwuAZl1MbWM7L61uzva-E-AWtLH0QANr80n7v_el274LpQ7Sjmcj5qkiNXBGgkmVN03/exec';
+        let confirmAction = null;
+        let fullEquipmentListData = [];
+        let currentEqListPage = 1;
+        const eqListItemsPerPage = 10; // 1ページあたりの表示件数
+
+        // --- 省略 (モーダル、fetchDataなどの基本関数は変更なし) ---
+        const modal = document.getElementById('customModal');
+        const modalTitle = document.getElementById('modalTitle');
+        const modalMessage = document.getElementById('modalMessage');
+        const modalOkButton = document.getElementById('modalOkButton');
+        const modalConfirmButton = document.getElementById('modalConfirmButton');
+        const modalCancelButton = document.getElementById('modalCancelButton');
+        const loadingOverlay = document.getElementById('loadingOverlay');
+
+        function showLoading(show) {
+            loadingOverlay.style.display = show ? 'flex' : 'none';
+        }
+
+        function showModal(title, message, type = 'alert', onConfirm = null) {
+            modalTitle.textContent = title;
+            modalMessage.innerHTML = message;
+
+            modalOkButton.style.display = 'none';
+            modalConfirmButton.style.display = 'none';
+            modalCancelButton.style.display = 'none';
+
+            if (type === 'alert') {
+                modalOkButton.style.display = 'inline-block';
+            } else if (type === 'confirm') {
+                modalConfirmButton.style.display = 'inline-block';
+                modalCancelButton.style.display = 'inline-block';
+                confirmAction = onConfirm;
+                modalConfirmButton.onclick = () => {
+                    if (confirmAction) confirmAction();
+                    closeModal();
+                };
+            }
+            modal.style.display = 'block';
+        }
+
+        function closeModal() {
+            modal.style.display = 'none';
+            confirmAction = null;
+        }
+
+        window.onclick = function (event) {
+            if (event.target == modal) {
+                closeModal();
+            }
+        }
+
+        function fetchData(formData) {
+            showLoading(true);
+            return fetch(GAS_URL, {
+                method: 'POST',
+                body: formData
+            })
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error(`HTTP error! status: ${response.status}`);
+                    }
+                    return response.json();
+                })
+                .catch(error => {
+                    console.error("Fetch Error:", error);
+                    throw error; // Re-throw to be caught by calling function
+                })
+                .finally(() => {
+                    showLoading(false);
+                });
+        }
+        // --- 省略ここまで ---
+
+
+        // --- Table Creation Functions ---
+        function createEquipmentTable(equipmentData) {
+            if (!Array.isArray(equipmentData) || equipmentData.length === 0) {
+                return '<div class="text-center text-gray-500 p-4">機材データがありません</div>';
+            }
+            let tableHtml = `
+            <div class="overflow-x-auto shadow-md rounded-lg">
+                <table class="min-w-full divide-y divide-gray-200">
+                    <thead class="bg-gray-200">
+                        <tr>
+                            <th class="px-4 py-3 text-left text-xs font-medium text-gray-600 uppercase tracking-wider">機材名</th>
+                            <th class="px-4 py-3 text-left text-xs font-medium text-gray-600 uppercase tracking-wider">総数</th>
+                            <th class="px-4 py-3 text-left text-xs font-medium text-gray-600 uppercase tracking-wider">使用中</th>
+                            <th class="px-4 py-3 text-left text-xs font-medium text-gray-600 uppercase tracking-wider">利用可能</th>
+                            <th class="px-4 py-3 text-left text-xs font-medium text-gray-600 uppercase tracking-wider">単価</th>
+                            <th class="px-4 py-3 text-left text-xs font-medium text-gray-600 uppercase tracking-wider">総額</th>
+                            <th class="px-4 py-3 text-left text-xs font-medium text-gray-600 uppercase tracking-wider">稼働率</th>
+                        </tr>
+                    </thead>
+                    <tbody class="bg-white divide-y divide-gray-200">`;
+
+            equipmentData.forEach(equipment => {
+                const total = equipment.total || 0;
+                const inUse = equipment.inUse || 0;
+                const available = total - inUse;
+                const unitPrice = equipment.unitPrice;
+
+                let displayUnitPrice;
+                let displayTotalValue;
+
+                if (unitPrice === 'manual') {
+                    displayUnitPrice = 'マニュアル';
+                    displayTotalValue = 'マニュアル';
+                } else {
+                    const numericUnitPrice = Number(unitPrice) || 0;
+                    const totalValue = total * numericUnitPrice;
+                    displayUnitPrice = `¥${numericUnitPrice.toLocaleString()}`;
+                    displayTotalValue = `¥${totalValue.toLocaleString()}`;
+                }
+
+                const utilizationRate = total > 0 ? ((inUse / total) * 100).toFixed(1) : '0.0';
+                let rateColorClass = 'text-green-600';
+                if (utilizationRate > 80) rateColorClass = 'text-red-600';
+                else if (utilizationRate > 50) rateColorClass = 'text-yellow-600';
+
+                tableHtml += `
+                <tr class="hover:bg-gray-50 transition-colors">
+                    <td class="px-4 py-3 whitespace-nowrap text-sm font-semibold text-gray-900">${equipment.name || '-'}</td>
+                    <td class="px-4 py-3 whitespace-nowrap text-sm text-gray-700">${total.toLocaleString()}</td>
+                    <td class="px-4 py-3 whitespace-nowrap text-sm text-red-600 font-medium">${inUse.toLocaleString()}</td>
+                    <td class="px-4 py-3 whitespace-nowrap text-sm text-green-600 font-medium">${available.toLocaleString()}</td>
+                    <td class="px-4 py-3 whitespace-nowrap text-sm text-gray-700">${displayUnitPrice}</td>
+                    <td class="px-4 py-3 whitespace-nowrap text-sm font-bold text-gray-800">${displayTotalValue}</td>
+                    <td class="px-4 py-3 whitespace-nowrap text-sm font-medium ${rateColorClass}">${utilizationRate}%</td>
+                </tr>`;
+            });
+            tableHtml += `</tbody></table></div>`;
+            return tableHtml;
+        }
+
+        // --- Display Result Function ---
+        function displayResult(elementId, data, successMessage, errorMessagePrefix = "Error") {
+            const resultArea = document.getElementById(elementId);
+            resultArea.innerHTML = '';
+
+            if (data && data.success) {
+                let content = `<div class="p-3 mb-3 bg-green-100 border border-green-400 text-green-700 rounded-md text-sm">${successMessage}</div>`;
+                if (elementId === 'equipmentListResult' && Array.isArray(data.data)) {
+                    content += createEquipmentTable(data.data);
+                }
+                resultArea.innerHTML = content;
+            } else if (data && data.error) {
+                resultArea.innerHTML = `<div class="p-3 bg-red-100 border border-red-400 text-red-700 rounded-md text-sm">${errorMessagePrefix}: ${data.error}
+                ${data.data ? `<pre class="bg-gray-100 p-2 rounded text-xs font-mono mt-2 max-h-40 overflow-y-auto">${JSON.stringify(data.data, null, 2)}</pre>` : ''}
+            </div>`;
+            } else if (data) {
+                resultArea.innerHTML = `<div class="p-3 bg-yellow-100 border border-yellow-400 text-yellow-700 rounded-md text-sm">完了しましたが、予期しないレスポンス形式です。
+                <pre class="bg-gray-100 p-2 rounded text-xs font-mono mt-2 max-h-40 overflow-y-auto">${JSON.stringify(data, null, 2)}</pre>
+            </div>`;
+            }
+            else {
+                resultArea.innerHTML = `<div class="p-3 bg-red-100 border border-red-400 text-red-700 rounded-md text-sm">${errorMessagePrefix}: 通信に失敗しました。詳細はコンソールを確認してください。</div>`;
+            }
+        }
+
+        // ★変更点: 関数名を変更し、datalistを生成するように修正
+        function populateEquipmentDatalist(equipmentData) {
+            const datalist = document.getElementById('equipmentNameList');
+            datalist.innerHTML = ''; // 既存の候補をクリア
+
+            if (Array.isArray(equipmentData)) {
+                equipmentData.forEach(eq => {
+                    const option = document.createElement('option');
+                    option.value = eq.name;
+                    datalist.appendChild(option);
+                });
+            }
+        }
+
+
+        // 既存の getEquipmentList 関数を、以下の内容で置き換える
+
+        function getEquipmentList() {
+            const resultAreaId = "equipmentListResult";
+            document.getElementById(resultAreaId).innerHTML = `<div class="text-center text-blue-600 p-4">🔄 取得中...</div>`;
+            const formData = new FormData();
+            formData.append('type', 'getEquipmentList');
+
+            fetchData(formData)
+                .then(data => {
+                    if (data.success && Array.isArray(data.data)) {
+                        fullEquipmentListData = data.data; // 全データをグローバル変数に保存
+                        populateEquipmentDatalist(fullEquipmentListData); // 変更フォーム用のdatalistを更新
+                        currentEqListPage = 1; // 常に1ページ目から表示
+                        renderEquipmentListPage(); // ★★★ ページネーション描画関数を呼び出す ★★★
+                    } else {
+                        // 失敗した場合の表示
+                        displayResult(resultAreaId, data, "機材リスト取得成功:", "機材リスト取得失敗");
+                    }
+                })
+                .catch(error => displayResult(resultAreaId, { error: error.message }, "", `機材リスト取得失敗`));
+        }
+
+        function registerEquipment() {
+            const resultAreaId = "registerEquipmentResult";
+            document.getElementById(resultAreaId).innerHTML = `<div class="text-center text-blue-600 p-4">🔄 登録中...</div>`;
+            const form = document.getElementById('registerEquipmentForm');
+            const name = form.elements['regEqName'].value.trim();
+            const total = form.elements['regEqTotal'].value;
+            const unitPrice = form.elements['regEqUnitPrice'].value;
+
+            if (!name || !total || !unitPrice) {
+                showModal("入力エラー", "機材名、総数、単価をすべて入力してください。");
+                displayResult(resultAreaId, { error: "機材名、総数、単価は必須です。" }, "", "入力エラー");
+                return;
+            }
+
+            const formData = new FormData();
+            formData.append('type', 'registerEquipment');
+            formData.append('name', name);
+            formData.append('total', total);
+            formData.append('unitPrice', unitPrice);
+
+            fetchData(formData)
+                .then(data => {
+                    displayResult(resultAreaId, data, "機材登録成功:", "機材登録失敗");
+                    if (data.success) {
+                        form.reset();
+                        getEquipmentList();
+                        showModal("成功", "機材を登録しました。");
+                    }
+                })
+                .catch(error => displayResult(resultAreaId, { error: error.message }, "", `機材登録失敗`));
+        }
+
+        function changeEquipmentInfo() {
+            const resultAreaId = "changeEquipmentResult";
+            document.getElementById(resultAreaId).innerHTML = `<div class="text-center text-blue-600 p-4">🔄 変更中...</div>`;
+            const form = document.getElementById('changeEquipmentForm');
+            const name = form.elements['changeEqName'].value;
+            const quantity = form.elements['changeEqQuantity'].value;
+            const unitPrice = form.elements['changeEqUnitPrice'].value;
+
+            if (!name || !quantity || !unitPrice) {
+                showModal("入力エラー", "機材名、総数、単価をすべて入力してください。");
+                displayResult(resultAreaId, { error: "機材名、総数、単価は必須です。" }, "", "入力エラー");
+                return;
+            }
+
+            const formData = new FormData();
+            formData.append('type', 'changeInfo');
+            formData.append('name', name);
+            formData.append('quantity', quantity);
+            formData.append('unitPrice', unitPrice);
+
+            fetchData(formData)
+                .then(data => {
+                    displayResult(resultAreaId, data, "機材情報変更成功:", "機材情報変更失敗");
+                    if (data.success) {
+                        form.reset();
+                        getEquipmentList();
+                        showModal("成功", "機材情報を変更しました。");
+                    }
+                })
+                .catch(error => displayResult(resultAreaId, { error: error.message }, "", `機材情報変更失敗`));
+        }
+
+        document.addEventListener('DOMContentLoaded', () => {
+            getEquipmentList();
+
+            // ★変更点: イベントを'change'から'input'に変更し、input要素を監視
+            document.getElementById('changeEqName').addEventListener('input', function () {
+                const selectedName = this.value;
+                const quantityInput = document.getElementById('changeEqQuantity');
+                const unitPriceInput = document.getElementById('changeEqUnitPrice');
+
+                const selectedEquipment = fullEquipmentListData.find(eq => eq.name === selectedName);
+
+                if (selectedEquipment) {
+                    quantityInput.value = selectedEquipment.total;
+                    if (selectedEquipment.unitPrice === 'manual') {
+                        unitPriceInput.value = '';
+                    } else {
+                        unitPriceInput.value = selectedEquipment.unitPrice;
+                    }
+                } else {
+                    quantityInput.value = '';
+                    unitPriceInput.value = '';
+                }
+            });
+        });
+        function renderEquipmentListPage() {
+            const resultArea = document.getElementById('equipmentListResult');
+            resultArea.innerHTML = ''; // いったんクリア
+
+            if (!fullEquipmentListData || fullEquipmentListData.length === 0) {
+                resultArea.innerHTML = '<div class="text-center text-gray-500 p-4">機材データがありません</div>';
+                updateEqListPaginationControls();
+                return;
+            }
+
+            const startIndex = (currentEqListPage - 1) * eqListItemsPerPage;
+            const endIndex = startIndex + eqListItemsPerPage;
+            const paginatedData = fullEquipmentListData.slice(startIndex, endIndex);
+
+            // スライスしたデータでテーブルを生成
+            resultArea.innerHTML = createEquipmentTable(paginatedData);
+
+            // ページネーションコントロールの状態を更新
+            updateEqListPaginationControls();
+        }
+
+        /**
+         * ページネーションコントロール（ボタンの有効/無効、情報テキスト）を更新する
+         */
+        function updateEqListPaginationControls() {
+            const controlsContainer = document.getElementById('eqListPaginationControls');
+            const infoDiv = document.getElementById('eqListInfo');
+            const prevButton = document.getElementById('prevEqPageButton');
+            const nextButton = document.getElementById('nextEqPageButton');
+
+            if (fullEquipmentListData.length <= eqListItemsPerPage) {
+                controlsContainer.style.display = 'none';
+                return;
+            }
+
+            controlsContainer.style.display = 'flex';
+            const totalPages = Math.ceil(fullEquipmentListData.length / eqListItemsPerPage);
+
+            prevButton.disabled = (currentEqListPage === 1);
+            nextButton.disabled = (currentEqListPage === totalPages);
+
+            const startItem = (currentEqListPage - 1) * eqListItemsPerPage + 1;
+            const endItem = Math.min(startItem + eqListItemsPerPage - 1, fullEquipmentListData.length);
+            infoDiv.textContent = `全 ${fullEquipmentListData.length} 件中 ${startItem} - ${endItem} 件を表示`;
+        }
+
+        /**
+         * 「次へ」ボタンの処理
+         */
+        function nextEqPage() {
+            const totalPages = Math.ceil(fullEquipmentListData.length / eqListItemsPerPage);
+            if (currentEqListPage < totalPages) {
+                currentEqListPage++;
+                renderEquipmentListPage();
+            }
+        }
+
+        /**
+         * 「前へ」ボタンの処理
+         */
+        function prevEqPage() {
+            if (currentEqListPage > 1) {
+                currentEqListPage--;
+                renderEquipmentListPage();
+            }
+        }
+    </script>
+</body>
+
+</html>

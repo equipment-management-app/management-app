@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="ja">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -7,8 +8,9 @@
     <link rel="stylesheet" href="style.css">
     <link rel="stylesheet" href="print.css" media="print">
 </head>
+
 <body>
-     <h1 id="site-name-heading"></h1>
+    <h1 id="site-name-heading"></h1>
     <div id="status-section" style="margin-bottom: 20px; display: flex; align-items: center; gap: 10px;">
         <strong>ステータス: </strong>
         <select id="status-select" class="status-select" onchange="updateStatus(this)">
@@ -21,6 +23,13 @@
 
     <div class="section">
         <h2>使用機材リスト</h2>
+        <div id="bulk-return-section"
+            style="margin-bottom: 10px; padding: 10px; background-color: #f3f3f3; border: 1px solid #ddd; border-radius: 5px; display: none;">
+            <label style="cursor: pointer; font-weight: bold;">
+                <input type="checkbox" id="return-all-checkbox" onchange="handleReturnAll(this)">
+                すべて返却済にする
+            </label>
+        </div>
         <table id="site-details-table">
             <thead>
                 <tr>
@@ -29,15 +38,21 @@
                     <th>使用数</th>
                     <th>単価</th>
                     <th>合計</th>
+                    <th>返却チェック</th>
                 </tr>
             </thead>
             <tbody id="site-details-body"></tbody>
         </table>
+        <div id="grand-total-section"
+            style="text-align: right; margin-top: 15px; font-size: 1.2em; font-weight: bold; padding-right: 10px;">
+            総計: <span id="grand-total-value">0</span>
+        </div>
         <div id="loading-details" style="display: block;">読み込み中...</div>
     </div>
 
     <div id="pdf-export-button" style="margin-top: 20px;">
-        <button type="button" onclick="window.print()" style="padding: 10px 20px; font-size: 1em; cursor: pointer; background-color: gray;">
+        <button type="button" onclick="window.print()"
+            style="padding: 10px 20px; font-size: 1em; cursor: pointer; background-color: gray;">
             PDFとして出力
         </button>
     </div>
@@ -45,7 +60,7 @@
     <a href="index.html">現場リストに戻る</a>
 
     <script>
-        const GAS_URL = 'https://script.google.com/macros/s/AKfycbwxqQWDoO753aQ8avGv9NGlEV2VaGYWEy-IBiG5eiXP4B0_MGQ5Wr9g10EHQtjQKacs/exec';
+        const GAS_URL = 'https://script.google.com/macros/s/AKfycbzg9JteHJD0NvC6PL8FVd8WaqSMcz5BewwZCprKgA3GilWUMM5hR01w_u6jVzjP6qTm/exec';
 
         // --- DOM要素の取得 ---
         const siteNameHeading = document.getElementById('site-name-heading');
@@ -53,12 +68,12 @@
         const loadingDetails = document.getElementById('loading-details');
         const siteDateEl = document.getElementById('site-date');
 
-        let currentStatus = ''; 
+        let currentStatus = '';
 
         document.addEventListener('DOMContentLoaded', () => {
             const params = new URLSearchParams(window.location.search);
             const uniqueId = params.get('id');
-            const siteName = params.get('name'); 
+            const siteName = params.get('name');
 
             if (uniqueId && siteName) {
                 const siteNameDecoded = decodeURIComponent(siteName);
@@ -94,7 +109,9 @@
                 return dateString;
             }
         }
-        
+
+        // detail.html の <script> 内
+
         async function loadDetails(uniqueId) {
             try {
                 const formData = new FormData();
@@ -104,59 +121,79 @@
                 const response = await fetch(GAS_URL, { method: 'POST', body: formData });
                 const result = await response.json();
                 if (!result.success) throw new Error(result.error);
-                
+
                 const siteInfo = result.data.info;
                 const equipmentList = result.data.equipment;
-                
-                currentStatus = siteInfo.status; 
+
+                currentStatus = siteInfo.status;
                 document.getElementById('status-select').value = currentStatus;
                 setStatusStyle(currentStatus);
 
                 const calendarIcon = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" style="width:18px;height:18px;vertical-align:middle;margin-right:6px;"><path fill-rule="evenodd" d="M6 2a1 1 0 00-1 1v1H4a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V6a2 2 0 00-2-2h-1V3a1 1 0 10-2 0v1H7V3a1 1 0 00-1-1zm0 5a1 1 0 000 2h8a1 1 0 100-2H6z" clip-rule="evenodd" /></svg>';
                 siteDateEl.innerHTML = `${calendarIcon} 現場日: <strong>${formatDateJP(siteInfo.date)}</strong>`;
-                
+
                 siteDetailsBody.innerHTML = '';
-                
+
                 // ★★★ ここからが修正箇所 ★★★
-                // equipmentListが存在し、2件以上のデータ（ヘッダー+データ1件以上）があるか確認
-                if (equipmentList && equipmentList.length > 1) {
-                    // .slice(1) を使って、配列の1番目（ヘッダー）を無視して2番目からループ処理する
+                if (equipmentList && equipmentList.length > 0) {
                     const dataRows = equipmentList.slice(1);
 
                     dataRows.forEach((eq, index) => {
                         const row = siteDetailsBody.insertRow();
+
+                        // 共通のセルを作成
+                        let cells = `
+                            <td>${eq.id || '-'}</td>
+                            <td>${eq.name || '-'}</td>
+                            <td>${eq.inUse || '-'}</td>
+                        `;
+
+                        // 単価と合計のセル
                         if (eq.unitPrice === 'manual') {
-                            row.innerHTML = `
-                                <td>${eq.id || '-'}</td>
-                                <td>${eq.name || '-'}</td>
-                                <td>${eq.inUse || '-'}</td>
+                            cells += `
                                 <td><input type="number" class="manual-price-input" placeholder="単価入力" oninput="recalculateTotal(this, ${eq.inUse}, ${index})"></td>
                                 <td><span id="total-price-${index}">${eq.totalPrice === '#NUM!' ? '' : (eq.totalPrice || '0')}</span></td>
                             `;
                         } else {
-                            row.innerHTML = `
-                                <td>${eq.id || '-'}</td>
-                                <td>${eq.name || '-'}</td>
-                                <td>${eq.inUse || '-'}</td>
+                            cells += `
                                 <td>${eq.unitPrice || '-'}</td>
                                 <td>${eq.totalPrice === '#NUM!' ? '' : (eq.totalPrice || '-')}</td>
                             `;
                         }
+
+                        // 【修正点1】 返却チェックボックスにclassとdata-*属性を追加
+                        cells += `
+                            <td style="text-align: center;">
+                                <input type="checkbox" 
+                                    class="equipment-return-checkbox" 
+                                    data-equipment-id="${eq.id}"
+                                    data-quantity="${eq.inUse}"
+                                    ${eq.isReturned ? 'checked' : ''} 
+                                    onchange="updateEquipmentReturnStatus(this, '${eq.id}', ${eq.inUse})">
+                            </td>
+                        `;
+
+                        row.innerHTML = cells;
                     });
+
+                    // 【修正点2】 「すべて返却」セクションを表示し、初期状態を更新
+                    document.getElementById('bulk-return-section').style.display = 'block';
+                    updateReturnAllCheckboxState();
+                    updateGrandTotal();
+
                 } else {
-                    // データがヘッダーのみ、または空の場合
-                    siteDetailsBody.innerHTML = '<tr><td colspan="5" style="text-align:center;">使用されている機材はありません。</td></tr>';
+                    // データがない場合
+                    siteDetailsBody.innerHTML = '<tr><td colspan="6" style="text-align:center;">使用されている機材はありません。</td></tr>';
                 }
                 // ★★★ ここまでが修正箇所 ★★★
 
             } catch (error) {
                 console.error('Error:', error);
-                siteDetailsBody.innerHTML = `<tr><td colspan="5">詳細の読み込みに失敗しました。</td></tr>`;
+                siteDetailsBody.innerHTML = `<tr><td colspan="6">詳細の読み込みに失敗しました。</td></tr>`; // colspanを6に変更
             } finally {
                 loadingDetails.style.display = 'none';
             }
         }
-
         async function updateStatus(selectElement) {
             const newStatus = selectElement.value;
             const previousStatus = currentStatus;
@@ -172,7 +209,7 @@
                 formData.append('type', 'updateStatus');
                 formData.append('id', uniqueId);
                 formData.append('status', newStatus);
-                setStatusStyle(newStatus); 
+                setStatusStyle(newStatus);
                 const response = await fetch(GAS_URL, { method: 'POST', body: formData });
                 const result = await response.json();
                 if (result.success) {
@@ -201,7 +238,180 @@
                 // toLocaleString() を使って3桁区切りの見やすい形式にする
                 targetTotalCell.textContent = newTotal.toLocaleString();
             }
+            updateGrandTotal();
+        }
+        // detail.html の <script> の中
+        async function updateEquipmentReturnStatus(checkbox, equipmentId, quantity) {
+            const params = new URLSearchParams(window.location.search);
+            const uniqueId = params.get('id');
+            const isReturned = checkbox.checked;
+
+            // ユーザーに確認
+            const actionText = isReturned ? "返却済み" : "未返却（使用中）";
+            if (!confirm(`この機材を「${actionText}」としてマークしますか？\nマスターリストの在庫数が変動します。`)) {
+                checkbox.checked = !isReturned; // 操作をキャンセル
+                return;
+            }
+
+            const formData = new FormData();
+            formData.append('type', 'updateEquipmentReturnStatus');
+            formData.append('id', uniqueId); // 現場のユニークID
+            formData.append('equipmentId', equipmentId); // 機材のID
+            formData.append('quantity', quantity); // 使用数
+            formData.append('isReturned', isReturned); // チェックボックスの状態
+
+            try {
+                const response = await fetch(GAS_URL, { method: 'POST', body: formData });
+                const result = await response.json();
+
+                if (result.success) {
+                    alert('在庫情報を更新しました。');
+                } else {
+                    throw new Error(result.error || '不明なエラーが発生しました。');
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                alert(`更新に失敗しました: ${error.message}`);
+                checkbox.checked = !isReturned; // エラーが発生した場合も操作を元に戻す
+            }
+        }
+        // detail.html の <script> 内
+
+        /**
+         * 「すべて返却」チェックボックスが操作されたときの処理
+         */
+        async function handleReturnAll(allCheckbox) {
+            const isReturned = allCheckbox.checked;
+            const individualCheckboxes = document.querySelectorAll('.equipment-return-checkbox');
+
+            // 確認ダイアログ
+            const actionText = isReturned ? "すべての機材を返却済に" : "すべての機材を未返却（使用中）に";
+            if (!confirm(`${actionText}しますか？\nマスターリストの在庫数が一括で変動します。`)) {
+                allCheckbox.checked = !isReturned;
+                return;
+            }
+
+            // 1. フロントエンドのチェックボックスをすべて同期させる
+            individualCheckboxes.forEach(cb => {
+                cb.checked = isReturned;
+            });
+
+            // 2. 更新対象の機材データを配列にまとめる
+            const equipmentToUpdate = [];
+            individualCheckboxes.forEach(cb => {
+                equipmentToUpdate.push({
+                    id: cb.dataset.equipmentId,
+                    quantity: cb.dataset.quantity
+                });
+            });
+
+            // 3. GASに一括更新リクエストを送信
+            const params = new URLSearchParams(window.location.search);
+            const uniqueId = params.get('id');
+
+            const formData = new FormData();
+            formData.append('type', 'bulkUpdateReturnStatus');
+            formData.append('id', uniqueId);
+            formData.append('isReturned', isReturned);
+            formData.append('equipmentData', JSON.stringify(equipmentToUpdate));
+
+            try {
+                const response = await fetch(GAS_URL, { method: 'POST', body: formData });
+                const result = await response.json();
+                if (result.success) {
+                    alert('在庫情報を一括更新しました。');
+                } else {
+                    throw new Error(result.error || '不明なエラー');
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                alert(`一括更新に失敗しました: ${error.message}`);
+                // エラー時はUIを元に戻す
+                allCheckbox.checked = !isReturned;
+                individualCheckboxes.forEach(cb => {
+                    // ここは複雑になるので、リロードを促すのがシンプル
+                    alert('画面の状態と実際のデータが異なっている可能性があります。ページを再読み込みしてください。');
+                });
+            }
+        }
+
+        /**
+         * 個別のチェックボックスの状態を監視し、「すべて返却」チェックボックスの状態を更新する
+         */
+        function updateReturnAllCheckboxState() {
+            const allCheckboxes = document.querySelectorAll('.equipment-return-checkbox');
+            const checkedCount = document.querySelectorAll('.equipment-return-checkbox:checked').length;
+            const returnAllCheckbox = document.getElementById('return-all-checkbox');
+
+            if (allCheckboxes.length > 0 && checkedCount === allCheckboxes.length) {
+                returnAllCheckbox.checked = true;
+                returnAllCheckbox.indeterminate = false;
+            } else if (checkedCount > 0) {
+                returnAllCheckbox.checked = false;
+                returnAllCheckbox.indeterminate = true; // 部分的にチェックされている状態
+            } else {
+                returnAllCheckbox.checked = false;
+                returnAllCheckbox.indeterminate = false;
+            }
+        }
+
+        // 既存の updateEquipmentReturnStatus 関数を少し修正
+        async function updateEquipmentReturnStatus(checkbox, equipmentId, quantity) {
+            const params = new URLSearchParams(window.location.search);
+            const uniqueId = params.get('id');
+            const isReturned = checkbox.checked;
+
+            const actionText = isReturned ? "返却済み" : "未返却（使用中）";
+            // ★ 修正: 確認ダイアログをシンプルに（一括操作と分けるため）
+            // if (!confirm(`この機材を「${actionText}」としてマークしますか？\nマスターリストの在庫数が変動します。`)) {
+            //     checkbox.checked = !isReturned; 
+            //     return;
+            // }
+
+            const formData = new FormData();
+            formData.append('type', 'updateEquipmentReturnStatus');
+            formData.append('id', uniqueId);
+            formData.append('equipmentId', equipmentId);
+            formData.append('quantity', quantity);
+            formData.append('isReturned', isReturned);
+
+            try {
+                const response = await fetch(GAS_URL, { method: 'POST', body: formData });
+                const result = await response.json();
+
+                if (result.success) {
+                    // ★ 追加: 成功したら「すべて返却」チェックボックスの状態も更新
+                    updateReturnAllCheckboxState();
+                } else {
+                    throw new Error(result.error || '不明なエラーが発生しました。');
+                }
+            } catch (error) {
+                // ★ 修正: alertを削除し、コンソールエラーに留めることでUI操作を邪魔しない
+                console.error('Error:', error);
+                alert(`更新に失敗しました: ${error.message}`);
+                checkbox.checked = !isReturned;
+            }
+        }
+        /**
+         * 表示されているテーブルの内容から総計を計算して更新する
+         */
+        function updateGrandTotal() {
+            let grandTotal = 0;
+            const totalCells = document.querySelectorAll('#site-details-body td:nth-child(5)'); // 全ての行の5番目のセル（合計列）を取得
+
+            totalCells.forEach(cell => {
+                // セルのテキストからカンマを取り除き、数値に変換して加算
+                const value = parseFloat(cell.textContent.replace(/,/g, '')) || 0;
+                grandTotal += value;
+            });
+
+            // 計算結果を表示用のspanに反映
+            const grandTotalEl = document.getElementById('grand-total-value');
+            if (grandTotalEl) {
+                grandTotalEl.textContent = grandTotal.toLocaleString(); // 3桁区切りで表示
+            }
         }
     </script>
 </body>
+
 </html>
