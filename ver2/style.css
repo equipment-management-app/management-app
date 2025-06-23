@@ -9,7 +9,7 @@ h1, h2 {
     padding-bottom: 5px; 
 }
 
-/* デフォルト（モバイル）のスタイル：縦並びにする */
+/* デフォルト（モバイル）のスタイル：縦並びにするためのやつ */
 .container { 
     display: flex;
     flex-direction: column;
