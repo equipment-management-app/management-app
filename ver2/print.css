@@ -13,6 +13,15 @@ a[href="index.html"],
     display: none !important;
 }
 
+.no-print,
+/* ★写真アップロードの操作エリアを追加 */
+#upload-result
+
+/* ★写真アップロードの結果表示エリアを追加 */
+    {
+    display: none !important;
+}
+
 /* 印刷用に全体の余白を調整 */
 body {
     margin: 10mm;

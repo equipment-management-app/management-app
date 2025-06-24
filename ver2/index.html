@@ -16,7 +16,7 @@
 
     <div class="container">
         <div class="section">
-            <h2>現場リスト</h2>
+            <h2>📋現場リスト</h2>
             <div class="filter-box" style="margin-bottom: 10px;">
                 <label>
                     <input type="checkbox" id="hide-completed-checkbox" onchange="applyFilterAndRender()">
@@ -47,7 +47,7 @@
         </div>
 
         <div class="section">
-            <h2>現場登録</h2>
+            <h2>➕現場登録</h2>
             <form id="registerSiteForm">
                 <div>
                     <label for="siteName">現場名:</label>
@@ -90,7 +90,7 @@
     </div>
 
     <script>
-        const GAS_URL = 'https://script.google.com/macros/s/AKfycbwxqQWDoO753aQ8avGv9NGlEV2VaGYWEy-IBiG5eiXP4B0_MGQ5Wr9g10EHQtjQKacs/exec';
+        const GAS_URL = 'https://script.google.com/macros/s/AKfycbyilsTi-mBhb8kuhKjEjsXwuHjfqJP0oijklVsAW2RiLN5Tb4MAYKjKCSrgstqSn0df/exec';
 
         // --- DOM要素の取得 ---
         const siteListBody = document.getElementById('site-list-body');
@@ -248,6 +248,8 @@
             switch (status) {
                 case '現場前':
                     return 'status-text-before';
+                case '現場中':
+                    return 'status-text-in-progress';
                 case '完了':
                     return 'status-text-completed';
                 case 'キャンセル':

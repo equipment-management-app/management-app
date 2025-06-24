@@ -132,6 +132,12 @@
         <div id="equipmentManagement">
             <div class="bg-white p-6 rounded-xl shadow-xl mb-8">
                 <h2 class="text-2xl font-semibold text-gray-700 mb-6 border-b pb-3">機材リスト</h2>
+                <div id="tagFilterContainer" class="mb-4">
+                    <label for="tagFilter" class="block text-sm font-medium text-gray-700 mb-1">タグで絞り込む:</label>
+                    <select id="tagFilter" onchange="applyTagFilter()"
+                        class="w-full sm:w-auto p-2 border border-gray-300 rounded-lg shadow-sm focus:ring-blue-500 focus:border-blue-500">
+                    </select>
+                </div>
                 <div id="equipmentListResult"
                     class="result-area mt-4 p-4 bg-gray-50 rounded-lg border border-gray-200 min-h-[100px] overflow-x-auto">
                     ここに機材リストが表示されます。</div>
@@ -166,6 +172,15 @@
                                 (¥):</label>
                             <input type="number" id="regEqUnitPrice" name="regEqUnitPrice" required
                                 class="w-full p-3 border border-gray-300 rounded-lg shadow-sm focus:ring-blue-500 focus:border-blue-500">
+                        </div>
+                        <div>
+                            <label for="regEqTag" class="block text-sm font-medium text-gray-700 mb-1">タグ:</label>
+                            <select id="regEqTag" name="regEqTag" required
+                                class="w-full p-3 border border-gray-300 rounded-lg shadow-sm focus:ring-blue-500 focus:border-blue-500">
+                                <option value="">選択してください</option>
+                                <option value="映像">映像</option>
+                                <option value="音響">音響</option>
+                            </select>
                         </div>
                         <button type="button" onclick="registerEquipment();"
                             class="w-full bg-green-500 hover:bg-green-600 text-white font-bold py-3 px-6 rounded-lg shadow-md transition duration-150 inline-flex items-center justify-center">
@@ -209,6 +224,15 @@
                             <input type="number" id="changeEqUnitPrice" name="changeEqUnitPrice" required
                                 class="w-full p-3 border border-gray-300 rounded-lg shadow-sm focus:ring-blue-500 focus:border-blue-500">
                         </div>
+                        <div>
+                            <label for="changeEqTag" class="block text-sm font-medium text-gray-700 mb-1">新しいタグ:</label>
+                            <select id="changeEqTag" name="changeEqTag" required
+                                class="w-full p-3 border border-gray-300 rounded-lg shadow-sm focus:ring-blue-500 focus:border-blue-500">
+                                <option value="">選択してください</option>
+                                <option value="映像">映像</option>
+                                <option value="音響">音響</option>
+                            </select>
+                        </div>
                         <button type="button" onclick="changeEquipmentInfo();"
                             class="w-full bg-yellow-500 hover:bg-yellow-600 text-white font-bold py-3 px-6 rounded-lg shadow-md transition duration-150 inline-flex items-center justify-center">
                             <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" viewBox="0 0 20 20"
@@ -228,9 +252,10 @@
     </div>
 
     <script>
-        const GAS_URL = 'https://script.google.com/macros/s/AKfycbwuAZl1MbWM7L61uzva-E-AWtLH0QANr80n7v_el274LpQ7Sjmcj5qkiNXBGgkmVN03/exec';
+        const GAS_URL = 'https://script.google.com/macros/s/AKfycbyilsTi-mBhb8kuhKjEjsXwuHjfqJP0oijklVsAW2RiLN5Tb4MAYKjKCSrgstqSn0df/exec';
         let confirmAction = null;
         let fullEquipmentListData = [];
+        let filteredEquipmentListData = [];
         let currentEqListPage = 1;
         const eqListItemsPerPage = 10; // 1ページあたりの表示件数
 
@@ -329,6 +354,7 @@
                 const inUse = equipment.inUse || 0;
                 const available = total - inUse;
                 const unitPrice = equipment.unitPrice;
+                const tag = equipment.tag || '未分類';
 
                 let displayUnitPrice;
                 let displayTotalValue;
@@ -414,8 +440,10 @@
             fetchData(formData)
                 .then(data => {
                     if (data.success && Array.isArray(data.data)) {
-                        fullEquipmentListData = data.data; // 全データをグローバル変数に保存
-                        populateEquipmentDatalist(fullEquipmentListData); // 変更フォーム用のdatalistを更新
+                        fullEquipmentListData = data.data;
+                        filteredEquipmentListData = [...fullEquipmentListData];
+                        populateEquipmentDatalist(fullEquipmentListData);
+                        populateTagFilter();
                         currentEqListPage = 1; // 常に1ページ目から表示
                         renderEquipmentListPage(); // ★★★ ページネーション描画関数を呼び出す ★★★
                     } else {
@@ -433,10 +461,11 @@
             const name = form.elements['regEqName'].value.trim();
             const total = form.elements['regEqTotal'].value;
             const unitPrice = form.elements['regEqUnitPrice'].value;
+            const tag = form.elements['regEqTag'].value;
 
-            if (!name || !total || !unitPrice) {
-                showModal("入力エラー", "機材名、総数、単価をすべて入力してください。");
-                displayResult(resultAreaId, { error: "機材名、総数、単価は必須です。" }, "", "入力エラー");
+            if (!name || !total || !unitPrice || !tag) {
+                showModal("入力エラー", "機材名、総数、単価、タグをすべて入力してください。");
+                displayResult(resultAreaId, { error: "必須項目が不足しています。" }, "", "入力エラー");
                 return;
             }
 
@@ -445,6 +474,7 @@
             formData.append('name', name);
             formData.append('total', total);
             formData.append('unitPrice', unitPrice);
+            formData.append('tag', tag);
 
             fetchData(formData)
                 .then(data => {
@@ -465,10 +495,11 @@
             const name = form.elements['changeEqName'].value;
             const quantity = form.elements['changeEqQuantity'].value;
             const unitPrice = form.elements['changeEqUnitPrice'].value;
+            const tag = form.elements['changeEqTag'].value;
 
-            if (!name || !quantity || !unitPrice) {
-                showModal("入力エラー", "機材名、総数、単価をすべて入力してください。");
-                displayResult(resultAreaId, { error: "機材名、総数、単価は必須です。" }, "", "入力エラー");
+            if (!name || !quantity || !unitPrice || !tag) { // ★ 修正
+                showModal("入力エラー", "機材名、総数、単価、新しいタグをすべて入力してください。");
+                displayResult(resultAreaId, { error: "必須項目が不足しています。" }, "", "入力エラー");
                 return;
             }
 
@@ -477,6 +508,7 @@
             formData.append('name', name);
             formData.append('quantity', quantity);
             formData.append('unitPrice', unitPrice);
+            formData.append('tag', tag);
 
             fetchData(formData)
                 .then(data => {
@@ -498,11 +530,13 @@
                 const selectedName = this.value;
                 const quantityInput = document.getElementById('changeEqQuantity');
                 const unitPriceInput = document.getElementById('changeEqUnitPrice');
+                const tagInput = document.getElementById('changeEqTag');
 
                 const selectedEquipment = fullEquipmentListData.find(eq => eq.name === selectedName);
 
                 if (selectedEquipment) {
                     quantityInput.value = selectedEquipment.total;
+                    tagInput.value = selectedEquipment.tag || '';
                     if (selectedEquipment.unitPrice === 'manual') {
                         unitPriceInput.value = '';
                     } else {
@@ -511,6 +545,7 @@
                 } else {
                     quantityInput.value = '';
                     unitPriceInput.value = '';
+                    tagInput.value = '';
                 }
             });
         });
@@ -518,20 +553,18 @@
             const resultArea = document.getElementById('equipmentListResult');
             resultArea.innerHTML = ''; // いったんクリア
 
-            if (!fullEquipmentListData || fullEquipmentListData.length === 0) {
-                resultArea.innerHTML = '<div class="text-center text-gray-500 p-4">機材データがありません</div>';
+            if (!filteredEquipmentListData || filteredEquipmentListData.length === 0) {
+                resultArea.innerHTML = '<div class="text-center text-gray-500 p-4">該当する機材データがありません</div>';
                 updateEqListPaginationControls();
                 return;
             }
 
             const startIndex = (currentEqListPage - 1) * eqListItemsPerPage;
             const endIndex = startIndex + eqListItemsPerPage;
-            const paginatedData = fullEquipmentListData.slice(startIndex, endIndex);
+            const paginatedData = filteredEquipmentListData.slice(startIndex, endIndex);
 
-            // スライスしたデータでテーブルを生成
             resultArea.innerHTML = createEquipmentTable(paginatedData);
 
-            // ページネーションコントロールの状態を更新
             updateEqListPaginationControls();
         }
 
@@ -544,27 +577,27 @@
             const prevButton = document.getElementById('prevEqPageButton');
             const nextButton = document.getElementById('nextEqPageButton');
 
-            if (fullEquipmentListData.length <= eqListItemsPerPage) {
+            if (filteredEquipmentListData.length <= eqListItemsPerPage) {
                 controlsContainer.style.display = 'none';
                 return;
             }
 
             controlsContainer.style.display = 'flex';
-            const totalPages = Math.ceil(fullEquipmentListData.length / eqListItemsPerPage);
+            const totalPages = Math.ceil(filteredEquipmentListData.length / eqListItemsPerPage);
 
             prevButton.disabled = (currentEqListPage === 1);
             nextButton.disabled = (currentEqListPage === totalPages);
 
             const startItem = (currentEqListPage - 1) * eqListItemsPerPage + 1;
             const endItem = Math.min(startItem + eqListItemsPerPage - 1, fullEquipmentListData.length);
-            infoDiv.textContent = `全 ${fullEquipmentListData.length} 件中 ${startItem} - ${endItem} 件を表示`;
+            infoDiv.textContent = `全 ${filteredEquipmentListData.length} 件中 ${startItem} - ${endItem} 件を表示`;
         }
 
         /**
          * 「次へ」ボタンの処理
          */
         function nextEqPage() {
-            const totalPages = Math.ceil(fullEquipmentListData.length / eqListItemsPerPage);
+            const totalPages = Math.ceil(filteredEquipmentListData.length / eqListItemsPerPage);
             if (currentEqListPage < totalPages) {
                 currentEqListPage++;
                 renderEquipmentListPage();
@@ -579,6 +612,38 @@
                 currentEqListPage--;
                 renderEquipmentListPage();
             }
+        }
+        /**
+         * タグの選択肢を動的に生成し、絞り込み用プルダウンに設定する
+         */
+        function populateTagFilter() {
+            const select = document.getElementById('tagFilter');
+            // Setを使って重複しないタグのリストを作成
+            const tags = new Set(fullEquipmentListData.map(item => item.tag || '未分類'));
+
+            select.innerHTML = '<option value="all">すべてのタグ</option>'; // デフォルトの選択肢
+            tags.forEach(tag => {
+                const option = document.createElement('option');
+                option.value = tag;
+                option.textContent = tag;
+                select.appendChild(option);
+            });
+        }
+
+        /**
+         * 選択されたタグで機材リストを絞り込み、再描画する
+         */
+        function applyTagFilter() {
+            const selectedTag = document.getElementById('tagFilter').value;
+
+            if (selectedTag === 'all') {
+                filteredEquipmentListData = [...fullEquipmentListData]; // 全データをコピー
+            } else {
+                filteredEquipmentListData = fullEquipmentListData.filter(item => (item.tag || '未分類') === selectedTag);
+            }
+
+            currentEqListPage = 1; // 絞り込み時は1ページ目に戻す
+            renderEquipmentListPage(); // 再描画
         }
     </script>
 </body>

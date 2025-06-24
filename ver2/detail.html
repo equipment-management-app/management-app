@@ -15,11 +15,25 @@
         <strong>ステータス: </strong>
         <select id="status-select" class="status-select" onchange="updateStatus(this)">
             <option value="現場前">現場前</option>
+            <option value="現場中">現場中</option>
             <option value="完了">完了</option>
             <option value="キャンセル">キャンセル</option>
         </select>
     </div>
     <p id="site-date"></p>
+    <div class="section" style="margin-bottom: 3%;">
+        <h2>回線図</h2>
+        <div id="photo-display-area"
+            style="margin-top: 10px; min-height: 150px; border: 2px dashed #ccc; padding: 10px; text-align: center;">
+            <span id="photo-placeholder" style="color: #888;">写真がありません</span>
+            <img id="site-photo" src="" alt="現場写真" style="max-width: 100%; max-height: 400px; display: none;">
+        </div>
+        <div class="no-print" style="margin-top: 15px;">
+            <input type="file" id="photo-upload-input" accept="image/*" style="display: block; margin-bottom: 10px;">
+            <button type="button" onclick="handlePhotoUpload()" class="btn-main">この写真を登録</button>
+        </div>
+        <div id="upload-result" style="margin-top: 10px;"></div>
+    </div>
 
     <div class="section">
         <h2>使用機材リスト</h2>
@@ -60,7 +74,7 @@
     <a href="index.html">現場リストに戻る</a>
 
     <script>
-        const GAS_URL = 'https://script.google.com/macros/s/AKfycbzg9JteHJD0NvC6PL8FVd8WaqSMcz5BewwZCprKgA3GilWUMM5hR01w_u6jVzjP6qTm/exec';
+        const GAS_URL = 'https://script.google.com/macros/s/AKfycbyilsTi-mBhb8kuhKjEjsXwuHjfqJP0oijklVsAW2RiLN5Tb4MAYKjKCSrgstqSn0df/exec';
 
         // --- DOM要素の取得 ---
         const siteNameHeading = document.getElementById('site-name-heading');
@@ -90,6 +104,7 @@
             selectElement.classList.remove('status-before', 'status-completed', 'status-canceled', 'status-default');
             switch (status) {
                 case '現場前': selectElement.classList.add('status-before'); break;
+                case '現場中': selectElement.classList.add('status-in-progress'); break;
                 case '完了': selectElement.classList.add('status-completed'); break;
                 case 'キャンセル': selectElement.classList.add('status-canceled'); break;
                 default: selectElement.classList.add('status-default'); break;
@@ -110,8 +125,6 @@
             }
         }
 
-        // detail.html の <script> 内
-
         async function loadDetails(uniqueId) {
             try {
                 const formData = new FormData();
@@ -125,6 +138,23 @@
                 const siteInfo = result.data.info;
                 const equipmentList = result.data.equipment;
 
+                // ★★★ ここからが修正箇所 ★★★
+                const photoPlaceholder = document.getElementById('photo-placeholder');
+                const sitePhoto = document.getElementById('site-photo');
+
+                // 1. GASから渡されたphotoUrlをチェック
+                if (siteInfo.photoUrl) {
+                    // 2. URLがあれば、imgタグのsrcに設定して表示する
+                    sitePhoto.src = siteInfo.photoUrl;
+                    sitePhoto.style.display = 'block';
+                    photoPlaceholder.style.display = 'none';
+                } else {
+                    // 3. URLがなければ、プレースホルダーを表示する
+                    sitePhoto.style.display = 'none';
+                    photoPlaceholder.style.display = 'block';
+                }
+                // ★★★ 修正はここまで ★★★
+
                 currentStatus = siteInfo.status;
                 document.getElementById('status-select').value = currentStatus;
                 setStatusStyle(currentStatus);
@@ -134,21 +164,16 @@
 
                 siteDetailsBody.innerHTML = '';
 
-                // ★★★ ここからが修正箇所 ★★★
                 if (equipmentList && equipmentList.length > 0) {
                     const dataRows = equipmentList.slice(1);
 
                     dataRows.forEach((eq, index) => {
                         const row = siteDetailsBody.insertRow();
-
-                        // 共通のセルを作成
                         let cells = `
                             <td>${eq.id || '-'}</td>
                             <td>${eq.name || '-'}</td>
                             <td>${eq.inUse || '-'}</td>
                         `;
-
-                        // 単価と合計のセル
                         if (eq.unitPrice === 'manual') {
                             cells += `
                                 <td><input type="number" class="manual-price-input" placeholder="単価入力" oninput="recalculateTotal(this, ${eq.inUse}, ${index})"></td>
@@ -160,8 +185,6 @@
                                 <td>${eq.totalPrice === '#NUM!' ? '' : (eq.totalPrice || '-')}</td>
                             `;
                         }
-
-                        // 【修正点1】 返却チェックボックスにclassとdata-*属性を追加
                         cells += `
                             <td style="text-align: center;">
                                 <input type="checkbox" 
@@ -172,24 +195,20 @@
                                     onchange="updateEquipmentReturnStatus(this, '${eq.id}', ${eq.inUse})">
                             </td>
                         `;
-
                         row.innerHTML = cells;
                     });
 
-                    // 【修正点2】 「すべて返却」セクションを表示し、初期状態を更新
                     document.getElementById('bulk-return-section').style.display = 'block';
                     updateReturnAllCheckboxState();
                     updateGrandTotal();
 
                 } else {
-                    // データがない場合
                     siteDetailsBody.innerHTML = '<tr><td colspan="6" style="text-align:center;">使用されている機材はありません。</td></tr>';
                 }
-                // ★★★ ここまでが修正箇所 ★★★
 
             } catch (error) {
                 console.error('Error:', error);
-                siteDetailsBody.innerHTML = `<tr><td colspan="6">詳細の読み込みに失敗しました。</td></tr>`; // colspanを6に変更
+                siteDetailsBody.innerHTML = `<tr><td colspan="6">詳細の読み込みに失敗しました。</td></tr>`;
             } finally {
                 loadingDetails.style.display = 'none';
             }
@@ -410,6 +429,59 @@
             if (grandTotalEl) {
                 grandTotalEl.textContent = grandTotal.toLocaleString(); // 3桁区切りで表示
             }
+        }
+        // detail.html の <script> タグの末尾に追加
+
+        function handlePhotoUpload() {
+            const fileInput = document.getElementById('photo-upload-input');
+            const uploadResultDiv = document.getElementById('upload-result');
+            const file = fileInput.files[0];
+
+            if (!file) {
+                alert("写真ファイルを選択してください。");
+                return;
+            }
+
+            // 5MB以上のファイルは警告
+            if (file.size > 5 * 1024 * 1024) {
+                alert("ファイルサイズが大きすぎます。5MB以下の画像を選択してください。");
+                return;
+            }
+
+            uploadResultDiv.innerHTML = '<p style="color: blue;">写真をアップロードしています...</p>';
+
+            const reader = new FileReader();
+            reader.onload = async function (e) {
+                const base64Data = e.target.result;
+                const params = new URLSearchParams(window.location.search);
+                const uniqueId = params.get('id');
+
+                const formData = new FormData();
+                formData.append('type', 'uploadPhoto');
+                formData.append('id', uniqueId);
+                formData.append('fileName', file.name);
+                formData.append('mimeType', file.type);
+                formData.append('base64Data', base64Data);
+
+                try {
+                    const response = await fetch(GAS_URL, { method: 'POST', body: formData });
+                    const result = await response.json();
+
+                    if (result.success) {
+                        uploadResultDiv.innerHTML = '<p style="color: green;">写真の登録に成功しました。</p>';
+                        const sitePhoto = document.getElementById('site-photo');
+                        sitePhoto.src = result.imageUrl; // 返されたURLで画像を表示
+                        sitePhoto.style.display = 'block';
+                        document.getElementById('photo-placeholder').style.display = 'none';
+                    } else {
+                        throw new Error(result.error || '不明なエラー');
+                    }
+                } catch (error) {
+                    console.error('Error:', error);
+                    uploadResultDiv.innerHTML = `<p style="color: red;">アップロードに失敗しました: ${error.message}</p>`;
+                }
+            };
+            reader.readAsDataURL(file);
         }
     </script>
 </body>
