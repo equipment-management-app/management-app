@@ -1,4 +1,4 @@
-const GAS_URL = 'https://script.google.com/macros/s/AKfycbyilsTi-mBhb8kuhKjEjsXwuHjfqJP0oijklVsAW2RiLN5Tb4MAYKjKCSrgstqSn0df/exec';
+const GAS_URL = 'https://script.google.com/macros/s/AKfycbyS7lLhCwGsPgW9XXvTOcJZ4mfNTgsZUeSUV7th3are3loBlCdbtnmpQ4IjeWoBdz9Q/exec';
 
 // --- DOM要素の取得 ---
 const siteListBody = document.getElementById('site-list-body');
@@ -216,16 +216,20 @@ function renderSiteListPage() {
         row.onclick = () => {
             window.location.href = `detail.html?id=${site.uniqueId}&name=${siteNameEncoded}`;
         };
+        console.log(site);
 
-        // ▼▼▼ 追加: タグ表示用のHTMLを生成 ▼▼▼
-        let tagsHtml = '';
-        if (site.hasVideo) {
-            tagsHtml += '<span class="tag tag-video">映像</span>';
-        }
-        if (site.hasAudio) {
-            tagsHtml += '<span class="tag tag-audio">音響</span>';
-        }
-        // ▲▲▲ 追加 ▲▲▲
+        // // ▼▼▼ 追加: タグ表示用のHTMLを生成 ▼▼▼
+        // let tagsHtml = '';
+        // if (site.hasVideo) {
+        //     tagsHtml += '<span class="tag tag-video">映像</span>';
+        // }
+        // if (site.hasAudio) {
+        //     tagsHtml += '<span class="tag tag-audio">音響</span>';
+        // }
+        // // ▲▲▲ 追加 ▲▲▲
+
+        // site.tagにタグを書いた方がシンプル
+        tagsHtml = `<span class="tag tag-video">${site.tag}</span>`;
 
         row.innerHTML = `
             <td>${site.name}</td>
@@ -305,11 +309,17 @@ async function registerSite() {
         formData.append('startDate', startDate);
         formData.append('endDate', endDate);
         formData.append('returnDate', returnDate);
+        console.log(startDate, endDate);
         // ▼▼▼ 追加: タグ情報をフォームデータに追加 ▼▼▼
-        formData.append('hasVideo', hasVideo);
-        formData.append('hasAudio', hasAudio);
+        if (hasAudio) {
+            formData.append('tag', "音響");
+        } else if (hasVideo) {
+            formData.append('tag', "映像")
+        }
         // ▲▲▲ 追加 ▲▲▲
         formData.append('equipment', JSON.stringify(siteEquipmentList));
+        const plainObject = Object.fromEntries(formData.entries());
+        console.log(plainObject);
         const response = await fetch(GAS_URL, { method: 'POST', body: formData });
         const result = await response.json();
         if (result.success) {
@@ -319,7 +329,7 @@ async function registerSite() {
             updateEquipmentDisplay();
             loadSiteList();
         } else {
-            throw new Error(result.error || '不明なエラーが発生しました。');
+            throw new Error(JSON.stringify(result.error) || '不明なエラーが発生しました。');
         }
     } catch (error) {
         console.error("Error during site registration:", error);
