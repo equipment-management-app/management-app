@@ -140,9 +140,9 @@ function applyFilterAndRender() {
     if (filterVideo || filterAudio) {
         tempData = tempData.filter(site => {
             // 「映像」で絞り込み、かつ現場に映像タグがある
-            const videoMatch = filterVideo && site.hasVideo;
+            const videoMatch = filterVideo && site.tag === "映像";
             // 「音響」で絞り込み、かつ現場に音響タグがある
-            const audioMatch = filterAudio && site.hasAudio;
+            const audioMatch = filterAudio && site.tag === "音響";
             // どちらかの条件に一致すれば表示
             return videoMatch || audioMatch;
         });
