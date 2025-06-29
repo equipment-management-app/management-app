@@ -150,9 +150,31 @@ button {
     color: #666;
 }
 
+/* ▼▼▼ 変更箇所: フィルター関連のスタイル追加 ▼▼▼ */
+.filter-container {
+    background-color: #f8f9fa;
+    padding: 10px;
+    border-radius: 5px;
+    margin-bottom: 15px;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 15px;
+}
+
+.filter-box {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.filter-box label {
+    cursor: pointer;
+}
+
 .search-box {
     margin-bottom: 15px;
 }
+/* ▲▲▲ 変更箇所 ▲▲▲ */
 
 .search-box input {
     width: 100%;
@@ -247,6 +269,43 @@ button {
 .nav-button:hover {
     background-color: #2563eb;
 }
+
+/* ▼▼▼ 追加: タグ関連のスタイル ▼▼▼ */
+.tag-fieldset {
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    padding: 10px;
+}
+
+.tag-fieldset legend {
+    padding: 0 5px;
+}
+
+.tag-fieldset label {
+    margin-right: 15px;
+    cursor: pointer;
+}
+
+.tag {
+    display: inline-block;
+    padding: 3px 10px;
+    border-radius: 15px;
+    font-size: 0.8em;
+    font-weight: bold;
+    color: white;
+    margin-right: 5px;
+    white-space: nowrap;
+}
+
+.tag-video {
+    background-color: #007bff; /* 青 */
+}
+
+.tag-audio {
+    background-color: #fd7e14; /* オレンジ */
+}
+/* ▲▲▲ 追加 ▲▲▲ */
+
 
 /* ---------------------------------- */
 /* ----- detail.html 専用スタイル ----- */
