@@ -5,6 +5,7 @@ const siteNameHeading = document.getElementById('site-name-heading');
 const siteDetailsBody = document.getElementById('site-details-body');
 const loadingDetails = document.getElementById('loading-details');
 const siteDateEl = document.getElementById('site-date');
+const returnDateDisplayEl = document.getElementById('return-date-display');
 
 let currentStatus = '';
 
@@ -81,6 +82,12 @@ async function loadDetails(uniqueId) {
 
         const calendarIcon = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" style="width:18px;height:18px;vertical-align:middle;margin-right:6px;"><path fill-rule="evenodd" d="M6 2a1 1 0 00-1 1v1H4a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V6a2 2 0 00-2-2h-1V3a1 1 0 10-2 0v1H7V3a1 1 0 00-1-1zm0 5a1 1 0 000 2h8a1 1 0 100-2H6z" clip-rule="evenodd" /></svg>';
         siteDateEl.innerHTML = `${calendarIcon} 現場期間: <strong>${formatDateJP(siteInfo.startDate)}</strong> 〜 <strong>${formatDateJP(siteInfo.endDate)}</strong>`;
+
+        if (siteInfo.returnDate) {
+            const returnIcon = `<svg xmlns="http://www.w3.org/2000/svg" style="width:18px;height:18px;vertical-align:middle;margin-right:6px;" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M15 10a.75.75 0 01-.75.75H7.56l1.22 1.22a.75.75 0 11-1.06 1.06l-2.5-2.5a.75.75 0 010-1.06l2.5-2.5a.75.75 0 111.06 1.06L7.56 9.25h6.69A.75.75 0 0115 10z" clip-rule="evenodd" /><path fill-rule="evenodd" d="M3 10a7 7 0 1114 0 7 7 0 01-14 0zm7-8a8 8 0 100 16 8 8 0 000-16z" clip-rule="evenodd" /></svg>`;
+            returnDateDisplayEl.innerHTML = `${returnIcon} 機材返却日: <strong>${formatDateJP(siteInfo.returnDate)}</strong>`;
+            returnDateDisplayEl.style.display = 'inline-block';
+        }
 
         siteDetailsBody.innerHTML = '';
 

@@ -244,6 +244,8 @@ async function registerSite() {
     const siteName = document.getElementById('siteName').value.trim();
     const startDate = document.getElementById('startDate').value;
     const endDate = document.getElementById('endDate').value;
+    const returnDate = document.getElementById('returnDate').value;
+
     if (!siteName || !startDate || !endDate) { alert("現場名、開始日、撤収日を入力してください。"); return; }
     if (siteEquipmentList.length === 0) { alert("機材を少なくとも1つ追加してください。"); return; }
     registerSiteResultArea.innerHTML = "登録処理中...";
@@ -253,6 +255,7 @@ async function registerSite() {
         formData.append('name', siteName);
         formData.append('startDate', startDate);
         formData.append('endDate', endDate);
+        formData.append('returnDate', returnDate);
         formData.append('equipment', JSON.stringify(siteEquipmentList));
         const response = await fetch(GAS_URL, { method: 'POST', body: formData });
         const result = await response.json();

@@ -11,21 +11,18 @@ h2 {
     padding-bottom: 5px;
 }
 
-/* デフォルト（モバイル）のスタイル：縦並びにする */
 .container {
     display: flex;
     flex-direction: column;
     gap: 20px;
 }
 
-/* 画面幅が768px以上の場合に適用されるスタイル：2列にする */
 @media (min-width: 768px) {
     .container {
         display: grid;
         grid-template-columns: 1fr 1fr;
     }
 }
-
 
 .section {
     background-color: #fff;
@@ -56,7 +53,6 @@ tbody tr:hover {
     cursor: pointer;
 }
 
-/* フォームのスタイル */
 form {
     display: flex;
     flex-direction: column;
@@ -126,7 +122,6 @@ button {
     cursor: pointer;
 }
 
-/* --- ページネーション用のスタイル --- */
 .pagination-controls {
     display: flex;
     justify-content: space-between;
@@ -155,7 +150,6 @@ button {
     color: #666;
 }
 
-/* --- 検索ボックス用のスタイル --- */
 .search-box {
     margin-bottom: 15px;
 }
@@ -169,7 +163,6 @@ button {
     font-size: 1em;
 }
 
-/* --- 機材検索の候補を表示するスタイルを追加 --- */
 .equipment-search-container {
     position: relative;
 }
@@ -196,13 +189,16 @@ button {
     background-color: #f0f0f0;
 }
 
-/* 現場リストのステータス用文字色スタイル */
 .status-text {
     font-weight: bold;
 }
 
 .status-text-before {
     color: #007bff;
+}
+
+.status-text-in-progress {
+    color: #fd7e14;
 }
 
 .status-text-completed {
@@ -216,114 +212,6 @@ button {
 .status-text-default {
     color: #6c757d;
 }
-
-/* ------------------------------------------------------ここからdetail用のスタイル----------------------------------------------------------------------------- */
-
-body {
-    font-family: sans-serif;
-    margin: 20px;
-    background-color: #f4f4f9;
-}
-
-h1 {
-    color: #333;
-    border-bottom: 2px solid #5a5a5a;
-    padding-bottom: 5px;
-}
-
-#site-date {
-    display: inline-block;
-    background-color: #e9ecef;
-    color: #343a40;
-    font-size: 1.1em;
-    font-weight: bold;
-    padding: 6px 12px;
-    border-radius: 16px;
-    margin-top: -5px;
-    margin-bottom: 20px;
-}
-
-#site-date svg {
-    display: inline-block;
-    vertical-align: middle;
-    margin-right: 6px;
-    width: 18px;
-    height: 18px;
-}
-
-.section {
-    background-color: #fff;
-    padding: 20px;
-    border-radius: 8px;
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-}
-
-table {
-    width: 100%;
-    border-collapse: collapse;
-    margin-top: 15px;
-}
-
-th,
-td {
-    border: 1px solid #ddd;
-    padding: 8px;
-    text-align: left;
-}
-
-thead {
-    background-color: #e9ecef;
-}
-
-a {
-    display: inline-block;
-    margin-top: 20px;
-    color: #007bff;
-    text-decoration: none;
-}
-
-a:hover {
-    text-decoration: underline;
-}
-
-.status-select {
-    padding: 8px 12px;
-    border-radius: 16px;
-    border: 2px solid;
-    font-weight: bold;
-    color: white;
-    -webkit-appearance: none;
-    -moz-appearance: none;
-    appearance: none;
-    background-image: url('data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%22292.4%22%20height%3D%22292.4%22%3E%3Cpath%20fill%3D%22%23ffffff%22%20d%3D%22M287%2069.4a17.6%2017.6%200%200%200-13-5.4H18.4c-5%200-9.3%201.8-12.9%205.4A17.6%2017.6%200%200%200%200%2082.2c0%205%201.8%209.3%205.4%2012.9l128%20127.9c3.6%203.6%207.8%205.4%2012.8%205.4s9.2-1.8%2012.8-5.4L287%2095c3.5-3.5%205.4-7.8%205.4-12.8%200-5-1.9-9.2-5.5-12.8z%22%2F%3E%3C%2Fsvg%3E');
-    background-repeat: no-repeat;
-    background-position: right 12px center;
-    background-size: 10px;
-    padding-right: 30px;
-}
-
-/* ステータスごとの色分け */
-.status-before {
-    background-color: #007bff;
-    border-color: #0069d9;
-}
-
-.status-completed {
-    background-color: #28a745;
-    border-color: #218838;
-}
-
-.status-canceled {
-    background-color: #dc3545;
-    border-color: #c82333;
-}
-
-.status-default {
-    background-color: #6c757d;
-    border-color: #5a6268;
-}
-
-/* ======== index.htmlのヘッダー用に追加 ======== */
 
 .page-header {
     display: flex;
@@ -360,19 +248,87 @@ a:hover {
     background-color: #2563eb;
 }
 
+/* ---------------------------------- */
+/* ----- detail.html 専用スタイル ----- */
+/* ---------------------------------- */
 
-/* ステータス選択プルダウン用 */
+#date-badge-container {
+    margin-bottom: 20px;
+}
+
+.date-info-badge {
+    display: inline-block;
+    background-color: #e9ecef;
+    color: #343a40;
+    font-size: 1.1em;
+    font-weight: bold;
+    padding: 6px 12px;
+    border-radius: 16px;
+    margin-top: -5px;
+    margin-right: 10px;
+    margin-bottom: 10px;
+}
+
+.date-info-badge svg {
+    display: inline-block;
+    vertical-align: middle;
+    margin-right: 6px;
+    width: 18px;
+    height: 18px;
+}
+
+a {
+    display: inline-block;
+    margin-top: 20px;
+    color: #007bff;
+    text-decoration: none;
+}
+
+a:hover {
+    text-decoration: underline;
+}
+
+.status-select {
+    padding: 8px 12px;
+    border-radius: 16px;
+    border: 2px solid;
+    font-weight: bold;
+    color: white;
+    -webkit-appearance: none;
+    -moz-appearance: none;
+    appearance: none;
+    background-image: url('data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%22292.4%22%20height%3D%22292.4%22%3E%3Cpath%20fill%3D%22%23ffffff%22%20d%3D%22M287%2069.4a17.6%2017.6%200%200%200-13-5.4H18.4c-5%200-9.3%201.8-12.9%205.4A17.6%2017.6%200%200%200%200%2082.2c0%205%201.8%209.3%205.4%2012.9l128%20127.9c3.6%203.6%207.8%205.4%2012.8%205.4s9.2-1.8%2012.8-5.4L287%2095c3.5-3.5%205.4-7.8%205.4-12.8%200-5-1.9-9.2-5.5-12.8z%22%2F%3E%3C%2Fsvg%3E');
+    background-repeat: no-repeat;
+    background-position: right 12px center;
+    background-size: 10px;
+    padding-right: 30px;
+}
+
+.status-before {
+    background-color: #007bff;
+    border-color: #0069d9;
+}
+
 .status-in-progress {
     background-color: #fd7e14;
     border-color: #f06c0c;
 }
 
-/* 現場リストのテキスト用 */
-.status-text-in-progress {
-    color: #fd7e14;
+.status-completed {
+    background-color: #28a745;
+    border-color: #218838;
 }
 
-/* 現場詳細ページの写真表示用スタイル */
+.status-canceled {
+    background-color: #dc3545;
+    border-color: #c82333;
+}
+
+.status-default {
+    background-color: #6c757d;
+    border-color: #5a6268;
+}
+
 #site-photo {
     display: block;
     margin-left: auto;
