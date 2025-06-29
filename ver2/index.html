@@ -17,11 +17,18 @@
     <div class="container">
         <div class="section">
             <h2>📋現場リスト</h2>
-            <div class="filter-box" style="margin-bottom: 10px;">
-                <label>
-                    <input type="checkbox" id="hide-completed-checkbox" onchange="applyFilterAndRender()">
-                    完了・キャンセルの現場を隠す
-                </label>
+            <div class="filter-container">
+                <div class="filter-box">
+                    <label>
+                        <input type="checkbox" id="hide-completed-checkbox" onchange="applyFilterAndRender()">
+                        完了・キャンセルの現場を隠す
+                    </label>
+                </div>
+                <div class="filter-box">
+                    <strong>タグで絞り込み:</strong>
+                    <label><input type="checkbox" id="filter-video" onchange="applyFilterAndRender()"> 映像</label>
+                    <label><input type="checkbox" id="filter-audio" onchange="applyFilterAndRender()"> 音響</label>
+                </div>
             </div>
             <div class="search-box">
                 <input type="search" id="searchInput" placeholder="現場名で検索...">
@@ -31,6 +38,8 @@
                 <thead>
                     <tr>
                         <th>現場名</th>
+                        <th>日程</th>
+                        <th>タグ</th>
                         <th>ステータス</th>
                     </tr>
                 </thead>
@@ -64,6 +73,13 @@
                 <div>
                     <label for="returnDate">機材返却日:</label>
                     <input type="date" id="returnDate" name="returnDate">
+                </div>
+                <div>
+                    <fieldset class="tag-fieldset">
+                        <legend>タグ</legend>
+                        <label><input type="checkbox" id="tag-video-reg"> 映像</label>
+                        <label><input type="checkbox" id="tag-audio-reg"> 音響</label>
+                    </fieldset>
                 </div>
                 <div style="border: 1px solid #ddd; padding: 15px; border-radius: 8px; background-color: #f9f9f9;">
                     <h3 style="margin-top:0;">機材追加</h3>
