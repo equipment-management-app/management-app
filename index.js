@@ -107,7 +107,7 @@ async function loadSiteList() {
         const response = await fetch(GAS_URL, { method: 'POST', body: formData });
         const result = await response.json();
         if (!result.success) throw new Error(result.error);
-        
+
         fullSiteListData = result.data
             .filter(site => !isNaN(parseInt(site.id)))
             .sort((a, b) => new Date(a.startDate) - new Date(b.startDate));
@@ -134,8 +134,7 @@ function applyFilterAndRender() {
     if (hideCompleted) {
         tempData = tempData.filter(site => site.state !== '完了' && site.state !== 'キャンセル');
     }
-    
-    // ▼▼▼ 追加: タグによる絞り込みロジック ▼▼▼
+
     // どちらかのタグフィルターが有効な場合のみ実行
     if (filterVideo || filterAudio) {
         tempData = tempData.filter(site => {
@@ -147,7 +146,6 @@ function applyFilterAndRender() {
             return videoMatch || audioMatch;
         });
     }
-    // ▲▲▲ 追加 ▲▲▲
 
     filteredSiteListData = searchTerm
         ? tempData.filter(site => site.name.toLowerCase().includes(searchTerm))
@@ -218,18 +216,21 @@ function renderSiteListPage() {
         };
         console.log(site);
 
-        // // ▼▼▼ 追加: タグ表示用のHTMLを生成 ▼▼▼
-        // let tagsHtml = '';
-        // if (site.hasVideo) {
-        //     tagsHtml += '<span class="tag tag-video">映像</span>';
-        // }
-        // if (site.hasAudio) {
-        //     tagsHtml += '<span class="tag tag-audio">音響</span>';
-        // }
-        // // ▲▲▲ 追加 ▲▲▲
+        // site.tagの値に基づいて適用するCSSクラスを決定する
+        let tagClass = '';
+        if (site.tag === '映像') {
+            tagClass = 'tag-video';
+        } else if (site.tag === '音響') {
+            tagClass = 'tag-audio';
+        } else {
+            tagClass = 'tag-default';
+        }
 
-        // site.tagにタグを書いた方がシンプル
-        tagsHtml = `<span class="tag tag-video">${site.tag}</span>`;
+        // 表示するタグ名（タグが存在しない場合は「-」を表示）
+        const tagName = site.tag || '-';
+
+        // 決定したクラスとタグ名を使ってHTMLを生成
+        const tagsHtml = `<span class="tag ${tagClass}">${tagName}</span>`;
 
         row.innerHTML = `
             <td>${site.name}</td>
