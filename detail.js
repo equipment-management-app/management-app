@@ -1,4 +1,4 @@
-const GAS_URL = 'https://script.google.com/macros/s/AKfycbyS7lLhCwGsPgW9XXvTOcJZ4mfNTgsZUeSUV7th3are3loBlCdbtnmpQ4IjeWoBdz9Q/exec';
+const GAS_URL = 'https://script.google.com/macros/s/AKfycbzxHCrpPWO3zYukUe0TfrTMfAhO62eFfhO8E43LO1PPQPXwdr_2l3poKVRs7J4-t0FsGA/exec';
 
 // --- DOM要素の取得 ---
 const siteNameHeading = document.getElementById('site-name-heading');
