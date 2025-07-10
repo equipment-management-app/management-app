@@ -1,11 +1,12 @@
-const GAS_URL = 'https://script.google.com/macros/s/AKfycbzxHCrpPWO3zYukUe0TfrTMfAhO62eFfhO8E43LO1PPQPXwdr_2l3poKVRs7J4-t0FsGA/exec';
+const GAS_URL = 'https://script.google.com/macros/s/AKfycbyilsTi-mBhb8kuhKjEjsXwuHjfqJP0oijklVsAW2RiLN5Tb4MAYKjKCSrgstqSn0df/exec';
+
 let confirmAction = null;
 let fullEquipmentListData = [];
 let filteredEquipmentListData = [];
 let currentEqListPage = 1;
 const eqListItemsPerPage = 10;
 
-// --- モーダル、ローディング、fetchDataなどの基本関数 ---
+// --- 省略 (モーダル、fetchDataなどの基本関数は変更なし) ---
 const modal = document.getElementById('customModal');
 const modalTitle = document.getElementById('modalTitle');
 const modalMessage = document.getElementById('modalMessage');
@@ -65,17 +66,19 @@ function fetchData(formData) {
         })
         .catch(error => {
             console.error("Fetch Error:", error);
-            throw error;
+            throw error; // Re-throw to be caught by calling function
         })
         .finally(() => {
             showLoading(false);
         });
 }
 
-// --- テーブル作成関数 ---
+
+
+// --- Table Creation Functions ---
 function createEquipmentTable(equipmentData) {
     if (!Array.isArray(equipmentData) || equipmentData.length === 0) {
-        return '<div class="text-center text-gray-500 p-4">該当する機材がありません</div>';
+        return '<div class="text-center text-gray-500 p-4">機材データがありません</div>';
     }
     let tableHtml = `
             <div class="overflow-x-auto shadow-md rounded-lg">
@@ -133,45 +136,47 @@ function createEquipmentTable(equipmentData) {
     return tableHtml;
 }
 
+// --- Display Result Function ---
 function displayResult(elementId, data, successMessage, errorMessagePrefix = "Error") {
-    const element = document.getElementById(elementId);
-    if (data.success) {
-        element.innerHTML = `<div class="text-green-600 p-2">${successMessage} ${data.message || ''}</div>`;
-    } else {
-        element.innerHTML = `<div class="text-red-600 p-2">${errorMessagePrefix}: ${data.error || 'Unknown error'}</div>`;
+    const resultArea = document.getElementById(elementId);
+    resultArea.innerHTML = '';
+
+    if (data && data.success) {
+        let content = `<div class="p-3 mb-3 bg-green-100 border border-green-400 text-green-700 rounded-md text-sm">${successMessage}</div>`;
+        if (elementId === 'equipmentListResult' && Array.isArray(data.data)) {
+            content += createEquipmentTable(data.data);
+        }
+        resultArea.innerHTML = content;
+    } else if (data && data.error) {
+        resultArea.innerHTML = `<div class="p-3 bg-red-100 border border-red-400 text-red-700 rounded-md text-sm">${errorMessagePrefix}: ${data.error}
+                ${data.data ? `<pre class="bg-gray-100 p-2 rounded text-xs font-mono mt-2 max-h-40 overflow-y-auto">${JSON.stringify(data.data, null, 2)}</pre>` : ''}
+            </div>`;
+    } else if (data) {
+        resultArea.innerHTML = `<div class="p-3 bg-yellow-100 border border-yellow-400 text-yellow-700 rounded-md text-sm">完了しましたが、予期しないレスポンス形式です。
+                <pre class="bg-gray-100 p-2 rounded text-xs font-mono mt-2 max-h-40 overflow-y-auto">${JSON.stringify(data, null, 2)}</pre>
+            </div>`;
+    }
+    else {
+        resultArea.innerHTML = `<div class="p-3 bg-red-100 border border-red-400 text-red-700 rounded-md text-sm">${errorMessagePrefix}: 通信に失敗しました。詳細はコンソールを確認してください。</div>`;
     }
 }
 
-
+// 関数名を変更し、datalistを生成するように修正
 function populateEquipmentDatalist(equipmentData) {
-    const dataList = document.getElementById('equipmentNameList');
-    dataList.innerHTML = '';
-    equipmentData.forEach(eq => {
-        const option = document.createElement('option');
-        option.value = eq.name;
-        dataList.appendChild(option);
-    });
+    const datalist = document.getElementById('equipmentNameList');
+    datalist.innerHTML = '';
+
+    if (Array.isArray(equipmentData)) {
+        equipmentData.forEach(eq => {
+            const option = document.createElement('option');
+            option.value = eq.name;
+            datalist.appendChild(option);
+        });
+    }
 }
 
-// --- フィルター、リスト取得、イベントリスナー ---
-function applyFiltersAndRender() {
-    const selectedTag = document.getElementById('tagFilter').value;
-    const searchTerm = document.getElementById('eqSearchInput').value.toLowerCase();
 
-    let tempData = [...fullEquipmentListData];
-
-    if (selectedTag !== 'all') {
-        tempData = tempData.filter(item => (item.tag || '未分類') === selectedTag);
-    }
-
-    if (searchTerm) {
-        tempData = tempData.filter(item => item.name.toLowerCase().includes(searchTerm));
-    }
-
-    filteredEquipmentListData = tempData;
-    currentEqListPage = 1;
-    renderEquipmentListPage();
-}
+// 既存の getEquipmentList 関数を、以下の内容で置き換える
 
 function getEquipmentList() {
     const resultAreaId = "equipmentListResult";
@@ -182,22 +187,90 @@ function getEquipmentList() {
     fetchData(formData)
         .then(data => {
             if (data.success && Array.isArray(data.data)) {
-                fullEquipmentListData = data.data.sort((a, b) => a.name.localeCompare(b.name, 'ja'));
+                fullEquipmentListData = data.data;
+                filteredEquipmentListData = [...fullEquipmentListData];
                 populateEquipmentDatalist(fullEquipmentListData);
                 populateTagFilter();
-                applyFiltersAndRender();
+                currentEqListPage = 1;
+                renderEquipmentListPage();
             } else {
-                displayResult(resultAreaId, { error: data.error }, "", "機材リスト取得失敗");
+                // 失敗した場合の表示
+                displayResult(resultAreaId, data, "機材リスト取得成功:", "機材リスト取得失敗");
             }
         })
         .catch(error => displayResult(resultAreaId, { error: error.message }, "", `機材リスト取得失敗`));
 }
 
+function registerEquipment() {
+    const resultAreaId = "registerEquipmentResult";
+    document.getElementById(resultAreaId).innerHTML = `<div class="text-center text-blue-600 p-4">🔄 登録中...</div>`;
+    const form = document.getElementById('registerEquipmentForm');
+    const name = form.elements['regEqName'].value.trim();
+    const total = form.elements['regEqTotal'].value;
+    const unitPrice = form.elements['regEqUnitPrice'].value;
+    const tag = form.elements['regEqTag'].value;
+
+    if (!name || !total || !unitPrice || !tag) {
+        showModal("入力エラー", "機材名、総数、単価、タグをすべて入力してください。");
+        displayResult(resultAreaId, { error: "必須項目が不足しています。" }, "", "入力エラー");
+        return;
+    }
+
+    const formData = new FormData();
+    formData.append('type', 'registerEquipment');
+    formData.append('name', name);
+    formData.append('total', total);
+    formData.append('unitPrice', unitPrice);
+    formData.append('tag', tag);
+
+    fetchData(formData)
+        .then(data => {
+            displayResult(resultAreaId, data, "機材登録成功:", "機材登録失敗");
+            if (data.success) {
+                form.reset();
+                getEquipmentList();
+                showModal("成功", "機材を登録しました。");
+            }
+        })
+        .catch(error => displayResult(resultAreaId, { error: error.message }, "", `機材登録失敗`));
+}
+
+function changeEquipmentInfo() {
+    const resultAreaId = "changeEquipmentResult";
+    document.getElementById(resultAreaId).innerHTML = `<div class="text-center text-blue-600 p-4">🔄 変更中...</div>`;
+    const form = document.getElementById('changeEquipmentForm');
+    const name = form.elements['changeEqName'].value;
+    const quantity = form.elements['changeEqQuantity'].value;
+    const unitPrice = form.elements['changeEqUnitPrice'].value;
+    const tag = form.elements['changeEqTag'].value;
+
+    if (!name || !quantity || !unitPrice || !tag) {
+        showModal("入力エラー", "機材名、総数、単価、新しいタグをすべて入力してください。");
+        displayResult(resultAreaId, { error: "必須項目が不足しています。" }, "", "入力エラー");
+        return;
+    }
+
+    const formData = new FormData();
+    formData.append('type', 'changeInfo');
+    formData.append('name', name);
+    formData.append('quantity', quantity);
+    formData.append('unitPrice', unitPrice);
+    formData.append('tag', tag);
+
+    fetchData(formData)
+        .then(data => {
+            displayResult(resultAreaId, data, "機材情報変更成功:", "機材情報変更失敗");
+            if (data.success) {
+                form.reset();
+                getEquipmentList();
+                showModal("成功", "機材情報を変更しました。");
+            }
+        })
+        .catch(error => displayResult(resultAreaId, { error: error.message }, "", `機材情報変更失敗`));
+}
+
 document.addEventListener('DOMContentLoaded', () => {
     getEquipmentList();
-
-    document.getElementById('eqSearchInput').addEventListener('input', applyFiltersAndRender);
-    document.getElementById('tagFilter').addEventListener('change', applyFiltersAndRender);
 
     document.getElementById('changeEqName').addEventListener('input', function () {
         const selectedName = this.value;
@@ -222,25 +295,27 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
 });
-
-
-// --- ▼▼▼ ここからが不足していた関数です ▼▼▼ ---
-
-/**
- * ページネーションを含めてリストの描画を更新する関数
- */
 function renderEquipmentListPage() {
     const resultArea = document.getElementById('equipmentListResult');
+    resultArea.innerHTML = '';
+
+    if (!filteredEquipmentListData || filteredEquipmentListData.length === 0) {
+        resultArea.innerHTML = '<div class="text-center text-gray-500 p-4">該当する機材データがありません</div>';
+        updateEqListPaginationControls();
+        return;
+    }
+
     const startIndex = (currentEqListPage - 1) * eqListItemsPerPage;
     const endIndex = startIndex + eqListItemsPerPage;
     const paginatedData = filteredEquipmentListData.slice(startIndex, endIndex);
 
     resultArea.innerHTML = createEquipmentTable(paginatedData);
+
     updateEqListPaginationControls();
 }
 
 /**
- * ページネーションのコントロール（ボタンや情報）を更新する関数
+ * ページネーションコントロール（ボタンの有効/無効、情報テキスト）を更新する
  */
 function updateEqListPaginationControls() {
     const controlsContainer = document.getElementById('eqListPaginationControls');
@@ -248,26 +323,24 @@ function updateEqListPaginationControls() {
     const prevButton = document.getElementById('prevEqPageButton');
     const nextButton = document.getElementById('nextEqPageButton');
 
-    const totalItems = filteredEquipmentListData.length;
-    if (totalItems <= eqListItemsPerPage) {
+    if (filteredEquipmentListData.length <= eqListItemsPerPage) {
         controlsContainer.style.display = 'none';
         return;
     }
 
     controlsContainer.style.display = 'flex';
-    const totalPages = Math.ceil(totalItems / eqListItemsPerPage);
+    const totalPages = Math.ceil(filteredEquipmentListData.length / eqListItemsPerPage);
 
-    prevButton.disabled = currentEqListPage === 1;
-    nextButton.disabled = currentEqListPage === totalPages;
+    prevButton.disabled = (currentEqListPage === 1);
+    nextButton.disabled = (currentEqListPage === totalPages);
 
     const startItem = (currentEqListPage - 1) * eqListItemsPerPage + 1;
-    const endItem = Math.min(startItem + eqListItemsPerPage - 1, totalItems);
-
-    infoDiv.textContent = `全 ${totalItems} 件中 ${startItem} - ${endItem} 件を表示`;
+    const endItem = Math.min(startItem + eqListItemsPerPage - 1, fullEquipmentListData.length);
+    infoDiv.textContent = `全 ${filteredEquipmentListData.length} 件中 ${startItem} - ${endItem} 件を表示`;
 }
 
 /**
- * 次のページを表示する関数
+ * 「次へ」ボタンの処理
  */
 function nextEqPage() {
     const totalPages = Math.ceil(filteredEquipmentListData.length / eqListItemsPerPage);
@@ -278,7 +351,7 @@ function nextEqPage() {
 }
 
 /**
- * 前のページを表示する関数
+ * 「前へ」ボタンの処理
  */
 function prevEqPage() {
     if (currentEqListPage > 1) {
@@ -286,14 +359,12 @@ function prevEqPage() {
         renderEquipmentListPage();
     }
 }
-
 /**
- * タグフィルターの選択肢を動的に生成する関数
+ * タグの選択肢を動的に生成し、絞り込み用プルダウンに設定する
  */
 function populateTagFilter() {
     const select = document.getElementById('tagFilter');
-    const tags = [...new Set(fullEquipmentListData.map(item => item.tag || '未分類'))].sort((a, b) => a.localeCompare(b, 'ja'));
-    const currentValue = select.value;
+    const tags = new Set(fullEquipmentListData.map(item => item.tag || '未分類'));
 
     select.innerHTML = '<option value="all">すべてのタグ</option>';
     tags.forEach(tag => {
@@ -302,81 +373,20 @@ function populateTagFilter() {
         option.textContent = tag;
         select.appendChild(option);
     });
+}
 
-    // フィルター適用前の選択値を保持しようと試みる
-    if (Array.from(select.options).some(opt => opt.value === currentValue)) {
-        select.value = currentValue;
+/**
+ * 選択されたタグで機材リストを絞り込み、再描画する
+ */
+function applyTagFilter() {
+    const selectedTag = document.getElementById('tagFilter').value;
+
+    if (selectedTag === 'all') {
+        filteredEquipmentListData = [...fullEquipmentListData];
     } else {
-        select.value = 'all';
-    }
-}
-
-/**
- * 新しい機材を登録する関数
- */
-function registerEquipment() {
-    const name = document.getElementById('regEqName').value;
-    const total = document.getElementById('regEqTotal').value;
-    const unitPrice = document.getElementById('regEqUnitPrice').value;
-    const tag = document.getElementById('regEqTag').value;
-    const resultAreaId = "registerEquipmentResult";
-
-    if (!name || !total || !unitPrice || !tag) {
-        showModal('入力エラー', 'すべての項目を入力してください。', 'alert');
-        return;
+        filteredEquipmentListData = fullEquipmentListData.filter(item => (item.tag || '未分類') === selectedTag);
     }
 
-    const formData = new FormData();
-    formData.append('type', 'registerEquipment');
-    formData.append('name', name);
-    formData.append('total', total);
-    formData.append('unitPrice', unitPrice);
-    formData.append('tag', tag);
-
-    showModal('登録確認', `機材「${name}」を登録しますか？`, 'confirm', () => {
-        fetchData(formData)
-            .then(data => {
-                displayResult(resultAreaId, data, "登録成功:", "登録失敗");
-                if (data.success) {
-                    document.getElementById('registerEquipmentForm').reset();
-                    getEquipmentList(); // リストを再読み込みして更新
-                }
-            })
-            .catch(error => displayResult(resultAreaId, { error: error.message }, "", "登録失敗"));
-    });
-}
-
-/**
- * 既存の機材情報を変更する関数
- */
-function changeEquipmentInfo() {
-    const name = document.getElementById('changeEqName').value;
-    const newTotal = document.getElementById('changeEqQuantity').value;
-    const newUnitPrice = document.getElementById('changeEqUnitPrice').value;
-    const newTag = document.getElementById('changeEqTag').value;
-    const resultAreaId = "changeEquipmentResult";
-
-    if (!name || !newTotal || !newUnitPrice || !newTag) {
-        showModal('入力エラー', 'すべての項目を入力してください。', 'alert');
-        return;
-    }
-
-    const formData = new FormData();
-    formData.append('type', 'changeEquipmentInfo');
-    formData.append('name', name);
-    formData.append('newTotal', newTotal);
-    formData.append('newUnitPrice', newUnitPrice);
-    formData.append('newTag', newTag);
-
-    showModal('変更確認', `機材「${name}」の情報を変更しますか？`, 'confirm', () => {
-        fetchData(formData)
-            .then(data => {
-                displayResult(resultAreaId, data, "変更成功:", "変更失敗");
-                if (data.success) {
-                    document.getElementById('changeEquipmentForm').reset();
-                    getEquipmentList(); // リストを再読み込みして更新
-                }
-            })
-            .catch(error => displayResult(resultAreaId, { error: error.message }, "", "変更失敗"));
-    });
+    currentEqListPage = 1;
+    renderEquipmentListPage();
 }
