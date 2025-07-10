@@ -1,4 +1,5 @@
 const GAS_URL = 'https://script.google.com/macros/s/AKfycbyilsTi-mBhb8kuhKjEjsXwuHjfqJP0oijklVsAW2RiLN5Tb4MAYKjKCSrgstqSn0df/exec';
+
 let confirmAction = null;
 let fullEquipmentListData = [];
 let filteredEquipmentListData = [];
