@@ -1,53 +1,62 @@
-const GAS_URL = 'https://script.google.com/macros/s/AKfycbyilsTi-mBhb8kuhKjEjsXwuHjfqJP0oijklVsAW2RiLN5Tb4MAYKjKCSrgstqSn0df/exec';
-
+const GAS_URL = 'https://script.google.com/macros/s/AKfycbyHlBA_-Gz4kC3C6nuk02mRYn9kNSflpL_k2w5sA3HND2wIvbBETlMs3LwBV9rqOqeslQ/exec';
 let confirmAction = null;
 let fullEquipmentListData = [];
 let filteredEquipmentListData = [];
 let currentEqListPage = 1;
 const eqListItemsPerPage = 10;
 
-// --- 省略 (モーダル、fetchDataなどの基本関数は変更なし) ---
-const modal = document.getElementById('customModal');
-const modalTitle = document.getElementById('modalTitle');
-const modalMessage = document.getElementById('modalMessage');
-const modalOkButton = document.getElementById('modalOkButton');
-const modalConfirmButton = document.getElementById('modalConfirmButton');
-const modalCancelButton = document.getElementById('modalCancelButton');
-const loadingOverlay = document.getElementById('loadingOverlay');
+// カテゴリごとの色を定義 (21色)
+const categoryColors = [
+    "#E57373", "#F06292", "#BA68C8", "#9575CD", "#7986CB", "#64B5F6",
+    "#4FC3F7", "#4DD0E1", "#4DB6AC", "#81C784", "#AED581", "#DCE775",
+    "#FFF176", "#FFD54F", "#FFB74D", "#FF8A65", "#A1887F", "#B0BEC5",
+    "#90A4AE", "#B39DDB", "#F48FB1"
+];
+
+// ご指定のカテゴリ名を配列として定義
+const CATEGORY_NAMES = [
+    "ミキサー", "I/Oラック", "プロセッサー", "イーサネットケーブル", "パワーアンプ",
+    "スピーカー", "スピーカースタンド", "スピーカーケーブル", "マイク", "マイクアクセサリー",
+    "マイクスタンド", "マイクケーブル", "ダイレクトボックス", "プレイバック", "ワイヤレス",
+    "マルチケーブル", "ケーブル", "電源", "アクセサリー", "リギング", "ツール"
+];
 
 function showLoading(show) {
-    loadingOverlay.style.display = show ? 'flex' : 'none';
+    document.getElementById('loadingOverlay').style.display = show ? 'flex' : 'none';
 }
 
 function showModal(title, message, type = 'alert', onConfirm = null) {
-    modalTitle.textContent = title;
-    modalMessage.innerHTML = message;
+    document.getElementById('modalTitle').textContent = title;
+    document.getElementById('modalMessage').innerHTML = message;
+    const okButton = document.getElementById('modalOkButton');
+    const confirmButton = document.getElementById('modalConfirmButton');
+    const cancelButton = document.getElementById('modalCancelButton');
 
-    modalOkButton.style.display = 'none';
-    modalConfirmButton.style.display = 'none';
-    modalCancelButton.style.display = 'none';
+    okButton.style.display = 'none';
+    confirmButton.style.display = 'none';
+    cancelButton.style.display = 'none';
 
     if (type === 'alert') {
-        modalOkButton.style.display = 'inline-block';
+        okButton.style.display = 'inline-block';
     } else if (type === 'confirm') {
-        modalConfirmButton.style.display = 'inline-block';
-        modalCancelButton.style.display = 'inline-block';
+        confirmButton.style.display = 'inline-block';
+        cancelButton.style.display = 'inline-block';
         confirmAction = onConfirm;
-        modalConfirmButton.onclick = () => {
+        confirmButton.onclick = () => {
             if (confirmAction) confirmAction();
             closeModal();
         };
     }
-    modal.style.display = 'block';
+    document.getElementById('customModal').style.display = 'block';
 }
 
 function closeModal() {
-    modal.style.display = 'none';
+    document.getElementById('customModal').style.display = 'none';
     confirmAction = null;
 }
 
 window.onclick = function (event) {
-    if (event.target == modal) {
+    if (event.target == document.getElementById('customModal')) {
         closeModal();
     }
 }
@@ -58,50 +67,51 @@ function fetchData(formData) {
         method: 'POST',
         body: formData
     })
-        .then(response => {
-            if (!response.ok) {
-                throw new Error(`HTTP error! status: ${response.status}`);
-            }
-            return response.json();
-        })
-        .catch(error => {
-            console.error("Fetch Error:", error);
-            throw error; // Re-throw to be caught by calling function
-        })
-        .finally(() => {
-            showLoading(false);
-        });
+    .then(response => {
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        return response.json();
+    })
+    .catch(error => {
+        console.error("Fetch Error:", error);
+        throw error;
+    })
+    .finally(() => {
+        showLoading(false);
+    });
 }
 
-
-
-// --- Table Creation Functions ---
 function createEquipmentTable(equipmentData) {
     if (!Array.isArray(equipmentData) || equipmentData.length === 0) {
         return '<div class="text-center text-gray-500 p-4">機材データがありません</div>';
     }
     let tableHtml = `
-            <div class="overflow-x-auto shadow-md rounded-lg">
-                <table class="min-w-full divide-y divide-gray-200">
-                    <thead class="bg-gray-200">
-                        <tr>
-                            <th class="px-4 py-3 text-left text-xs font-medium text-gray-600 uppercase tracking-wider">機材名</th>
-                            <th class="px-4 py-3 text-left text-xs font-medium text-gray-600 uppercase tracking-wider">総数</th>
-                            <th class="px-4 py-3 text-left text-xs font-medium text-gray-600 uppercase tracking-wider">使用中</th>
-                            <th class="px-4 py-3 text-left text-xs font-medium text-gray-600 uppercase tracking-wider">利用可能</th>
-                            <th class="px-4 py-3 text-left text-xs font-medium text-gray-600 uppercase tracking-wider">単価</th>
-                            <th class="px-4 py-3 text-left text-xs font-medium text-gray-600 uppercase tracking-wider">総額</th>
-                            <th class="px-4 py-3 text-left text-xs font-medium text-gray-600 uppercase tracking-wider">稼働率</th>
-                        </tr>
-                    </thead>
-                    <tbody class="bg-white divide-y divide-gray-200">`;
+        <div class="overflow-x-auto shadow-md rounded-lg">
+            <table class="min-w-full divide-y divide-gray-200">
+                <thead class="bg-gray-200">
+                    <tr>
+                        <th class="px-4 py-3 text-left text-xs font-medium text-gray-600 uppercase tracking-wider">ID</th>
+                        <th class="px-4 py-3 text-left text-xs font-medium text-gray-600 uppercase tracking-wider">機材名</th>
+                        <th class="px-4 py-3 text-left text-xs font-medium text-gray-600 uppercase tracking-wider">総数</th>
+                        <th class="px-4 py-3 text-left text-xs font-medium text-gray-600 uppercase tracking-wider">使用中</th>
+                        <th class="px-4 py-3 text-left text-xs font-medium text-gray-600 uppercase tracking-wider">利用可能</th>
+                        <th class="px-4 py-3 text-left text-xs font-medium text-gray-600 uppercase tracking-wider">単価</th>
+                        <th class="px-4 py-3 text-left text-xs font-medium text-gray-600 uppercase tracking-wider">総額</th>
+                        <th class="px-4 py-3 text-left text-xs font-medium text-gray-600 uppercase tracking-wider">稼働率</th>
+                    </tr>
+                </thead>
+                <tbody class="bg-white divide-y divide-gray-200">`;
 
     equipmentData.forEach(equipment => {
+        const equipmentId = equipment.id || 0;
         const total = equipment.total || 0;
         const inUse = equipment.inUse || 0;
-        const available = total - inUse;
+        const available = equipment.stock !== undefined ? equipment.stock : (total - inUse);
         const unitPrice = equipment.unitPrice;
-        const tag = equipment.tag || '未分類';
+
+        const categoryIndex = Math.floor((equipmentId - 1) / 1000);
+        const color = categoryIndex >= 0 && categoryIndex < categoryColors.length ? categoryColors[categoryIndex] : '#000000';
 
         let displayUnitPrice;
         let displayTotalValue;
@@ -122,21 +132,21 @@ function createEquipmentTable(equipmentData) {
         else if (utilizationRate > 50) rateColorClass = 'text-yellow-600';
 
         tableHtml += `
-                <tr class="hover:bg-gray-50 transition-colors">
-                    <td class="px-4 py-3 whitespace-nowrap text-sm font-semibold text-gray-900">${equipment.name || '-'}</td>
-                    <td class="px-4 py-3 whitespace-nowrap text-sm text-gray-700">${total.toLocaleString()}</td>
-                    <td class="px-4 py-3 whitespace-nowrap text-sm text-red-600 font-medium">${inUse.toLocaleString()}</td>
-                    <td class="px-4 py-3 whitespace-nowrap text-sm text-green-600 font-medium">${available.toLocaleString()}</td>
-                    <td class="px-4 py-3 whitespace-nowrap text-sm text-gray-700">${displayUnitPrice}</td>
-                    <td class="px-4 py-3 whitespace-nowrap text-sm font-bold text-gray-800">${displayTotalValue}</td>
-                    <td class="px-4 py-3 whitespace-nowrap text-sm font-medium ${rateColorClass}">${utilizationRate}%</td>
-                </tr>`;
+            <tr class="hover:bg-gray-50 transition-colors">
+                <td class="px-4 py-3 whitespace-nowrap text-sm font-bold" style="color: ${color};">${equipmentId}</td>
+                <td class="px-4 py-3 whitespace-nowrap text-sm font-semibold text-gray-900">${equipment.name || '-'}</td>
+                <td class="px-4 py-3 whitespace-nowrap text-sm text-gray-700">${total.toLocaleString()}</td>
+                <td class="px-4 py-3 whitespace-nowrap text-sm text-red-600 font-medium">${inUse.toLocaleString()}</td>
+                <td class="px-4 py-3 whitespace-nowrap text-sm text-green-600 font-medium">${available.toLocaleString()}</td>
+                <td class="px-4 py-3 whitespace-nowrap text-sm text-gray-700">${displayUnitPrice}</td>
+                <td class="px-4 py-3 whitespace-nowrap text-sm font-bold text-gray-800">${displayTotalValue}</td>
+                <td class="px-4 py-3 whitespace-nowrap text-sm font-medium ${rateColorClass}">${utilizationRate}%</td>
+            </tr>`;
     });
     tableHtml += `</tbody></table></div>`;
     return tableHtml;
 }
 
-// --- Display Result Function ---
 function displayResult(elementId, data, successMessage, errorMessagePrefix = "Error") {
     const resultArea = document.getElementById(elementId);
     resultArea.innerHTML = '';
@@ -161,7 +171,6 @@ function displayResult(elementId, data, successMessage, errorMessagePrefix = "Er
     }
 }
 
-// 関数名を変更し、datalistを生成するように修正
 function populateEquipmentDatalist(equipmentData) {
     const datalist = document.getElementById('equipmentNameList');
     datalist.innerHTML = '';
@@ -175,9 +184,6 @@ function populateEquipmentDatalist(equipmentData) {
     }
 }
 
-
-// 既存の getEquipmentList 関数を、以下の内容で置き換える
-
 function getEquipmentList() {
     const resultAreaId = "equipmentListResult";
     document.getElementById(resultAreaId).innerHTML = `<div class="text-center text-blue-600 p-4">🔄 取得中...</div>`;
@@ -187,6 +193,8 @@ function getEquipmentList() {
     fetchData(formData)
         .then(data => {
             if (data.success && Array.isArray(data.data)) {
+                data.data.sort((a, b) => (Number(a.id) || 0) - (Number(b.id) || 0));
+
                 fullEquipmentListData = data.data;
                 filteredEquipmentListData = [...fullEquipmentListData];
                 populateEquipmentDatalist(fullEquipmentListData);
@@ -194,7 +202,6 @@ function getEquipmentList() {
                 currentEqListPage = 1;
                 renderEquipmentListPage();
             } else {
-                // 失敗した場合の表示
                 displayResult(resultAreaId, data, "機材リスト取得成功:", "機材リスト取得失敗");
             }
         })
@@ -205,19 +212,24 @@ function registerEquipment() {
     const resultAreaId = "registerEquipmentResult";
     document.getElementById(resultAreaId).innerHTML = `<div class="text-center text-blue-600 p-4">🔄 登録中...</div>`;
     const form = document.getElementById('registerEquipmentForm');
+    
+    const category = form.elements['regEqCategory'].value;
     const name = form.elements['regEqName'].value.trim();
     const total = form.elements['regEqTotal'].value;
-    const unitPrice = form.elements['regEqUnitPrice'].value;
     const tag = form.elements['regEqTag'].value;
 
-    if (!name || !total || !unitPrice || !tag) {
-        showModal("入力エラー", "機材名、総数、単価、タグをすべて入力してください。");
+    const isManual = form.elements['regEqManualPrice'].checked;
+    const unitPrice = isManual ? 'manual' : form.elements['regEqUnitPrice'].value;
+
+    if (!category || !name || !total || !unitPrice || !tag) {
+        showModal("入力エラー", "カテゴリ、機材名、総数、単価、タグをすべて入力してください。");
         displayResult(resultAreaId, { error: "必須項目が不足しています。" }, "", "入力エラー");
         return;
     }
 
     const formData = new FormData();
     formData.append('type', 'registerEquipment');
+    formData.append('category', category);
     formData.append('name', name);
     formData.append('total', total);
     formData.append('unitPrice', unitPrice);
@@ -239,13 +251,17 @@ function changeEquipmentInfo() {
     const resultAreaId = "changeEquipmentResult";
     document.getElementById(resultAreaId).innerHTML = `<div class="text-center text-blue-600 p-4">🔄 変更中...</div>`;
     const form = document.getElementById('changeEquipmentForm');
+    
+    const newCategory = form.elements['changeEqCategory'].value;
     const name = form.elements['changeEqName'].value;
     const quantity = form.elements['changeEqQuantity'].value;
-    const unitPrice = form.elements['changeEqUnitPrice'].value;
     const tag = form.elements['changeEqTag'].value;
 
-    if (!name || !quantity || !unitPrice || !tag) {
-        showModal("入力エラー", "機材名、総数、単価、新しいタグをすべて入力してください。");
+    const isManual = form.elements['changeEqManualPrice'].checked;
+    const unitPrice = isManual ? 'manual' : form.elements['changeEqUnitPrice'].value;
+
+    if (!name || !newCategory || !quantity || !unitPrice || !tag) {
+        showModal("入力エラー", "機材名、新しいカテゴリ、総数、単価、新しいタグをすべて入力してください。");
         displayResult(resultAreaId, { error: "必須項目が不足しています。" }, "", "入力エラー");
         return;
     }
@@ -253,6 +269,7 @@ function changeEquipmentInfo() {
     const formData = new FormData();
     formData.append('type', 'changeInfo');
     formData.append('name', name);
+    formData.append('newCategory', newCategory);
     formData.append('quantity', quantity);
     formData.append('unitPrice', unitPrice);
     formData.append('tag', tag);
@@ -269,32 +286,98 @@ function changeEquipmentInfo() {
         .catch(error => displayResult(resultAreaId, { error: error.message }, "", `機材情報変更失敗`));
 }
 
+function populateCategorySelects() {
+    const regSelect = document.getElementById('regEqCategory');
+    const changeSelect = document.getElementById('changeEqCategory');
+    let optionsHtml = '<option value="">選択してください</option>';
+
+    CATEGORY_NAMES.forEach((name, index) => {
+        const categoryNumber = index + 1;
+        
+        optionsHtml += `<option value="${categoryNumber}">${name}</option>`;
+    });
+
+    if (regSelect) regSelect.innerHTML = optionsHtml;
+    if (changeSelect) changeSelect.innerHTML = optionsHtml;
+}
+
 document.addEventListener('DOMContentLoaded', () => {
+    populateCategorySelects();
     getEquipmentList();
 
+    // 「機材登録」フォームの要素
+    const regUnitPriceInput = document.getElementById('regEqUnitPrice');
+    const regManualCheckbox = document.getElementById('regEqManualPrice');
+
+    // 「機材情報変更」フォームの要素
+    const changeUnitPriceInput = document.getElementById('changeEqUnitPrice');
+    const changeManualCheckbox = document.getElementById('changeEqManualPrice');
+
+    // 「機材登録」フォームのチェックボックス操作 
+    regManualCheckbox.addEventListener('change', function() {
+        regUnitPriceInput.disabled = this.checked;
+        if (this.checked) {
+            regUnitPriceInput.value = ''; 
+            regUnitPriceInput.required = false; 
+        } else {
+            regUnitPriceInput.required = true; 
+        }
+    });
+
+    // 「機材情報変更」フォームのチェックボックス操作
+    changeManualCheckbox.addEventListener('change', function() {
+        changeUnitPriceInput.disabled = this.checked;
+        if (this.checked) {
+            changeUnitPriceInput.value = '';
+            changeUnitPriceInput.required = false;
+        } else {
+            changeUnitPriceInput.required = true;
+        }
+    });
+
+    // --- 「機材情報変更」で機材を選択した際のイベントリスナー ---
     document.getElementById('changeEqName').addEventListener('input', function () {
         const selectedName = this.value;
         const quantityInput = document.getElementById('changeEqQuantity');
-        const unitPriceInput = document.getElementById('changeEqUnitPrice');
         const tagInput = document.getElementById('changeEqTag');
+        const categoryInput = document.getElementById('changeEqCategory');
 
         const selectedEquipment = fullEquipmentListData.find(eq => eq.name === selectedName);
 
         if (selectedEquipment) {
+            // --- 既存のロジック ---
             quantityInput.value = selectedEquipment.total;
             tagInput.value = selectedEquipment.tag || '';
+            const categoryId = Math.floor((selectedEquipment.id - 1) / 1000) + 1;
+            categoryInput.value = categoryId;
+
+            // 単価とチェックボックスの状態を反映
             if (selectedEquipment.unitPrice === 'manual') {
-                unitPriceInput.value = '';
+                // 手動設定の場合
+                changeManualCheckbox.checked = true;    
+                changeUnitPriceInput.disabled = true;   
+                changeUnitPriceInput.value = '';        
+                changeUnitPriceInput.required = false;  
             } else {
-                unitPriceInput.value = selectedEquipment.unitPrice;
+                // 固定単価の場合
+                changeManualCheckbox.checked = false;   
+                changeUnitPriceInput.disabled = false;  
+                changeUnitPriceInput.value = selectedEquipment.unitPrice; 
+                changeUnitPriceInput.required = true;  
             }
+
         } else {
             quantityInput.value = '';
             unitPriceInput.value = '';
             tagInput.value = '';
+            categoryInput.value = '';
+            changeManualCheckbox.checked = false;
+            changeUnitPriceInput.disabled = false;
+            changeUnitPriceInput.required = true;
         }
     });
 });
+
 function renderEquipmentListPage() {
     const resultArea = document.getElementById('equipmentListResult');
     resultArea.innerHTML = '';
@@ -314,9 +397,6 @@ function renderEquipmentListPage() {
     updateEqListPaginationControls();
 }
 
-/**
- * ページネーションコントロール（ボタンの有効/無効、情報テキスト）を更新する
- */
 function updateEqListPaginationControls() {
     const controlsContainer = document.getElementById('eqListPaginationControls');
     const infoDiv = document.getElementById('eqListInfo');
@@ -335,13 +415,10 @@ function updateEqListPaginationControls() {
     nextButton.disabled = (currentEqListPage === totalPages);
 
     const startItem = (currentEqListPage - 1) * eqListItemsPerPage + 1;
-    const endItem = Math.min(startItem + eqListItemsPerPage - 1, fullEquipmentListData.length);
+    const endItem = Math.min(startItem + eqListItemsPerPage - 1, filteredEquipmentListData.length);
     infoDiv.textContent = `全 ${filteredEquipmentListData.length} 件中 ${startItem} - ${endItem} 件を表示`;
 }
 
-/**
- * 「次へ」ボタンの処理
- */
 function nextEqPage() {
     const totalPages = Math.ceil(filteredEquipmentListData.length / eqListItemsPerPage);
     if (currentEqListPage < totalPages) {
@@ -350,34 +427,34 @@ function nextEqPage() {
     }
 }
 
-/**
- * 「前へ」ボタンの処理
- */
 function prevEqPage() {
     if (currentEqListPage > 1) {
         currentEqListPage--;
         renderEquipmentListPage();
     }
 }
-/**
- * タグの選択肢を動的に生成し、絞り込み用プルダウンに設定する
- */
+
 function populateTagFilter() {
     const select = document.getElementById('tagFilter');
-    const tags = new Set(fullEquipmentListData.map(item => item.tag || '未分類'));
+    const allTags = new Set(fullEquipmentListData.map(item => item.tag || '未分類'));
+
+    // 現在選択されている値を取得
+    const selectedValue = select.value;
 
     select.innerHTML = '<option value="all">すべてのタグ</option>';
-    tags.forEach(tag => {
+    allTags.forEach(tag => {
         const option = document.createElement('option');
         option.value = tag;
         option.textContent = tag;
         select.appendChild(option);
     });
+
+    // 以前の選択状態を復元
+    if (selectedValue) {
+        select.value = selectedValue;
+    }
 }
 
-/**
- * 選択されたタグで機材リストを絞り込み、再描画する
- */
 function applyTagFilter() {
     const selectedTag = document.getElementById('tagFilter').value;
 

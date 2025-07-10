@@ -1,4 +1,4 @@
-const GAS_URL = 'https://script.google.com/macros/s/AKfycbyilsTi-mBhb8kuhKjEjsXwuHjfqJP0oijklVsAW2RiLN5Tb4MAYKjKCSrgstqSn0df/exec';
+const GAS_URL = 'https://script.google.com/macros/s/AKfycbyHlBA_-Gz4kC3C6nuk02mRYn9kNSflpL_k2w5sA3HND2wIvbBETlMs3LwBV9rqOqeslQ/exec';
 
 // --- DOM要素の取得 ---
 const siteListBody = document.getElementById('site-list-body');
@@ -66,7 +66,6 @@ function showEquipmentSuggestions() {
     }
 }
 
-// 候補クリック時の動作を変更
 function selectEquipmentSuggestion(name) {
     equipmentNameInput.value = name;
     equipmentSuggestionsDiv.style.display = 'none';
@@ -84,7 +83,6 @@ function addEquipmentToSite() {
         return;
     }
 
-    // 修正：被ってる機材は加算
     const existingIndex = siteEquipmentList.findIndex(item => item.name === name);
 
     if (existingIndex > -1) {
@@ -99,7 +97,6 @@ function addEquipmentToSite() {
     nameInput.focus();
 }
 
-
 async function loadSiteList() {
     siteListBody.innerHTML = '';
     loadingSites.style.display = 'block';
@@ -110,26 +107,48 @@ async function loadSiteList() {
         const response = await fetch(GAS_URL, { method: 'POST', body: formData });
         const result = await response.json();
         if (!result.success) throw new Error(result.error);
-        fullSiteListData = result.data.filter(site => !isNaN(parseInt(site.id))).reverse();
+        
+        fullSiteListData = result.data
+            .filter(site => !isNaN(parseInt(site.id)))
+            .sort((a, b) => new Date(a.startDate) - new Date(b.startDate));
+
         applyFilterAndRender();
     } catch (error) {
         console.error('Error:', error);
-        siteListBody.innerHTML = `<tr><td colspan="3">リストの読み込みに失敗しました。</td></tr>`;
+        siteListBody.innerHTML = `<tr><td colspan="4">リストの読み込みに失敗しました。</td></tr>`;
     } finally {
         loadingSites.style.display = 'none';
     }
 }
+
 function applyFilterAndRender() {
     const searchTerm = searchInput.value.toLowerCase();
     const hideCompleted = document.getElementById('hide-completed-checkbox').checked;
+    // ▼▼▼ 追加: タグフィルターの状態を取得 ▼▼▼
+    const filterVideo = document.getElementById('filter-video').checked;
+    const filterAudio = document.getElementById('filter-audio').checked;
+    // ▲▲▲ 追加 ▲▲▲
 
     let tempData = fullSiteListData;
 
     if (hideCompleted) {
         tempData = tempData.filter(site => site.state !== '完了' && site.state !== 'キャンセル');
     }
+    
+    // ▼▼▼ 追加: タグによる絞り込みロジック ▼▼▼
+    // どちらかのタグフィルターが有効な場合のみ実行
+    if (filterVideo || filterAudio) {
+        tempData = tempData.filter(site => {
+            // 「映像」で絞り込み、かつ現場に映像タグがある
+            const videoMatch = filterVideo && site.hasVideo;
+            // 「音響」で絞り込み、かつ現場に音響タグがある
+            const audioMatch = filterAudio && site.hasAudio;
+            // どちらかの条件に一致すれば表示
+            return videoMatch || audioMatch;
+        });
+    }
+    // ▲▲▲ 追加 ▲▲▲
 
-    // ステータスで絞り込んだ結果(tempData)に対して、さらに検索キーワードで絞り込む
     filteredSiteListData = searchTerm
         ? tempData.filter(site => site.name.toLowerCase().includes(searchTerm))
         : tempData;
@@ -137,7 +156,6 @@ function applyFilterAndRender() {
     currentSiteListPage = 1;
     renderSiteListPage();
 }
-// 追加: 日付を「yyyy年MM月dd日」形式に変換する
 function formatDateJP(dateString) {
     if (!dateString) return '—';
     try {
@@ -152,6 +170,21 @@ function formatDateJP(dateString) {
         return dateString;
     }
 }
+
+function formatDateMMDD(dateString) {
+    if (!dateString) return '—';
+    try {
+        const date = new Date(dateString);
+        if (isNaN(date.getTime())) return '—';
+
+        const month = date.getMonth() + 1;
+        const day = date.getDate();
+        return `${month}/${day}`;
+    } catch (e) {
+        return dateString;
+    }
+}
+
 function getStatusClass(status) {
     switch (status) {
         case '現場前':
@@ -183,11 +216,27 @@ function renderSiteListPage() {
         row.onclick = () => {
             window.location.href = `detail.html?id=${site.uniqueId}&name=${siteNameEncoded}`;
         };
-        // getStatusClass関数でクラス名を取得し、<td>に適用する
+        console.log(site);
+
+        // // ▼▼▼ 追加: タグ表示用のHTMLを生成 ▼▼▼
+        // let tagsHtml = '';
+        // if (site.hasVideo) {
+        //     tagsHtml += '<span class="tag tag-video">映像</span>';
+        // }
+        // if (site.hasAudio) {
+        //     tagsHtml += '<span class="tag tag-audio">音響</span>';
+        // }
+        // // ▲▲▲ 追加 ▲▲▲
+
+        // site.tagにタグを書いた方がシンプル
+        tagsHtml = `<span class="tag tag-video">${site.tag}</span>`;
+
         row.innerHTML = `
-                    <td>${site.name}</td>
-                    <td class="status-text ${getStatusClass(site.state)}">${site.state}</td>
-                `;
+            <td>${site.name}</td>
+            <td>${formatDateMMDD(site.startDate)} ~ ${formatDateMMDD(site.endDate)}</td>
+            <td>${tagsHtml}</td>
+            <td class="status-text ${getStatusClass(site.state)}">${site.state}</td>
+        `;
         siteListBody.appendChild(row);
     });
     updateSiteListPaginationControls();
@@ -242,16 +291,35 @@ function clearEquipmentList() {
 }
 async function registerSite() {
     const siteName = document.getElementById('siteName').value.trim();
-    const siteDate = document.getElementById('siteDate').value;
-    if (!siteName || !siteDate) { alert("現場名と現場日を入力してください。"); return; }
+    const startDate = document.getElementById('startDate').value;
+    const endDate = document.getElementById('endDate').value;
+    const returnDate = document.getElementById('returnDate').value;
+    // ▼▼▼ 追加: 登録フォームのタグの状態を取得 ▼▼▼
+    const hasVideo = document.getElementById('tag-video-reg').checked;
+    const hasAudio = document.getElementById('tag-audio-reg').checked;
+    // ▲▲▲ 追加 ▲▲▲
+
+    if (!siteName || !startDate || !endDate) { alert("現場名、開始日、撤収日を入力してください。"); return; }
     if (siteEquipmentList.length === 0) { alert("機材を少なくとも1つ追加してください。"); return; }
     registerSiteResultArea.innerHTML = "登録処理中...";
     try {
         const formData = new FormData();
         formData.append('type', 'registerSite');
         formData.append('name', siteName);
-        formData.append('date', siteDate);
+        formData.append('startDate', startDate);
+        formData.append('endDate', endDate);
+        formData.append('returnDate', returnDate);
+        console.log(startDate, endDate);
+        // ▼▼▼ 追加: タグ情報をフォームデータに追加 ▼▼▼
+        if (hasAudio) {
+            formData.append('tag', "音響");
+        } else if (hasVideo) {
+            formData.append('tag', "映像")
+        }
+        // ▲▲▲ 追加 ▲▲▲
         formData.append('equipment', JSON.stringify(siteEquipmentList));
+        const plainObject = Object.fromEntries(formData.entries());
+        console.log(plainObject);
         const response = await fetch(GAS_URL, { method: 'POST', body: formData });
         const result = await response.json();
         if (result.success) {
@@ -261,7 +329,7 @@ async function registerSite() {
             updateEquipmentDisplay();
             loadSiteList();
         } else {
-            throw new Error(result.error || '不明なエラーが発生しました。');
+            throw new Error(JSON.stringify(result.error) || '不明なエラーが発生しました。');
         }
     } catch (error) {
         console.error("Error during site registration:", error);
