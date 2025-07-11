@@ -20,8 +20,11 @@
             <option value="キャンセル">キャンセル</option>
         </select>
     </div>
-    <p id="site-date"></p>
-    <div class="section" style="margin-bottom: 3%;">
+    <div id="date-badge-container">
+        <p id="site-date" class="date-info-badge"></p>
+        <p id="return-date-display" class="date-info-badge" style="display: none;"></p>
+    </div>
+    <div class="section no-print" style="margin-bottom: 3%;">
         <h2>回線図</h2>
         <div id="photo-display-area"
             style="margin-top: 10px; min-height: 150px; border: 2px dashed #ccc; padding: 10px; text-align: center;">
@@ -63,15 +66,93 @@
         </div>
         <div id="loading-details" style="display: block;">読み込み中...</div>
     </div>
+    <div class="page-actions-container no-print">
 
-    <div id="pdf-export-button" style="margin-top: 20px;">
-        <button type="button" onclick="window.print()"
-            style="padding: 10px 20px; font-size: 1em; cursor: pointer; background-color: gray;">
+    <div class="actions-left">
+        <button type="button" onclick="window.print()" class="btn-secondary">
             PDFとして出力
         </button>
+        <div id="edit-button-container">
+            <button type="button" onclick="openEditModal()" class="btn-edit">
+                現場情報を編集する
+            </button>
+        </div>
+        <div id="equipment-edit-controls">
+            <button type="button" id="enter-edit-mode-btn" onclick="toggleEditMode(true)" class="btn-edit">
+                機材リストを編集
+            </button>
+            <div id="editing-buttons" style="display: none;">
+                <button type="button" class="btn-add" onclick="openAddEquipmentModal()">機材を追加</button>
+                <button type="button" class="btn-main" onclick="saveEquipmentChanges()">変更を保存</button>
+                <button type="button" class="btn-cancel" onclick="toggleEditMode(false)">キャンセル</button>
+            </div>
+        </div>
     </div>
 
-    <a href="index.html">現場リストに戻る</a>
+    <div class="actions-right">
+        <a href="index.html" class="nav-button-secondary">現場リストに戻る</a>
+    </div>
+
+</div>
+
+    <div id="editSiteModal" class="modal-overlay" style="display: none;">
+        <div class="modal-content">
+            <h3 class="modal-title">現場情報の編集</h3>
+            <p class="modal-notice">※この編集はステータスが「現場前」の場合のみ可能です。</p>
+            <form id="editSiteForm">
+                <div class="form-group">
+                    <label for="editSiteName">現場名:</label>
+                    <input type="text" id="editSiteName" required>
+                </div>
+                <div class="form-group">
+                    <label for="editTag">タグ:</label>
+                    <select id="editTag" required>
+                        <option value="">選択してください</option>
+                        <option value="映像">映像</option>
+                        <option value="音響">音響</option>
+                        </select>
+                </div>
+                <div class="form-group">
+                    <label for="editStartDate">開始日:</label>
+                    <input type="date" id="editStartDate" required>
+                </div>
+                <div class="form-group">
+                    <label for="editEndDate">終了日:</label>
+                    <input type="date" id="editEndDate" required>
+                </div>
+                <div class="form-group">
+                    <label for="editReturnDate">返却日:</label>
+                    <input type="date" id="editReturnDate">
+                </div>
+                <div class="modal-actions">
+                    <button type="button" class="btn-main" onclick="saveSiteInfo()">変更を保存</button>
+                    <button type="button" class="btn-cancel" onclick="closeEditModal()">キャンセル</button>
+                </div>
+            </form>
+        </div>
+    </div>
+    
+
+    <div id="addEquipmentModal" class="modal-overlay" style="display: none;">
+        <div class="modal-content">
+            <h3 class="modal-title">機材の追加</h3>
+            <form id="addEquipmentForm">
+                <div class="form-group equipment-search-container">
+                    <label for="addEqName">機材を選択:</label>
+                    <input type="text" id="addEqName" placeholder="機材名を入力..." autocomplete="off">
+                    <div id="addEquipmentSuggestions" class="search-suggestions"></div>
+                </div>
+                <div class="form-group">
+                    <label for="addEqQuantity">使用数:</label>
+                    <input type="number" id="addEqQuantity" value="1" min="1">
+                </div>
+                <div class="modal-actions">
+                    <button type="button" class="btn-main" onclick="addEquipmentToTable()">リストに追加</button>
+                    <button type="button" class="btn-cancel" onclick="closeAddEquipmentModal()">キャンセル</button>
+                </div>
+            </form>
+        </div>
+    </div>
 
     <script src="detail.js"></script>
 </body>
