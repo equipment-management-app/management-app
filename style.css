@@ -24,6 +24,24 @@ h2 {
     }
 }
 
+@media (max-width: 768px) {
+
+    /* 親コンテナを縦積みに変更 */
+    .page-actions-container {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 20px;
+    }
+
+    /* ボタンを持つ左右のコンテナの調整 */
+    .page-actions-container .actions-left,
+    .page-actions-container .actions-right {
+        justify-content: center;
+        flex-wrap: wrap;
+        gap: 10px;
+    }
+}
+
 .section {
     background-color: #fff;
     padding: 20px;
@@ -174,6 +192,7 @@ button {
 .search-box {
     margin-bottom: 15px;
 }
+
 /* ▲▲▲ 変更箇所 ▲▲▲ */
 
 .search-box input {
@@ -298,12 +317,15 @@ button {
 }
 
 .tag-video {
-    background-color: #007bff; /* 青 */
+    background-color: #007bff;
+    /* 青 */
 }
 
 .tag-audio {
-    background-color: #fd7e14; /* オレンジ */
+    background-color: #fd7e14;
+    /* オレンジ */
 }
+
 /* ▲▲▲ 追加 ▲▲▲ */
 
 
@@ -395,7 +417,7 @@ a:hover {
 }
 
 .lock-notice {
-    background-color: #fffbe6; 
+    background-color: #fffbe6;
     color: #8a6d3b;
     padding: 15px;
     border: 1px solid #ffeeba;
@@ -406,16 +428,18 @@ a:hover {
 }
 
 .btn-edit {
-    background-color: #f0ad4e; 
+    background-color: #f0ad4e;
     color: white;
     padding: 10px 20px;
     border: none;
     border-radius: 5px;
     cursor: pointer;
 }
+
 .btn-edit:hover {
     background-color: #ec971f;
 }
+
 .modal-overlay {
     position: fixed;
     top: 0;
@@ -428,6 +452,7 @@ a:hover {
     align-items: center;
     z-index: 1000;
 }
+
 .modal-content {
     background-color: white;
     padding: 20px 30px;
@@ -435,23 +460,28 @@ a:hover {
     width: 90%;
     max-width: 500px;
 }
+
 .modal-title {
     font-size: 1.5em;
     margin-bottom: 10px;
 }
+
 .modal-notice {
     font-size: 0.9em;
     color: #888;
     margin-bottom: 20px;
 }
+
 .form-group {
     margin-bottom: 15px;
 }
+
 .form-group label {
     display: block;
     margin-bottom: 5px;
     font-weight: bold;
 }
+
 .form-group input,
 .form-group select {
     width: 100%;
@@ -459,10 +489,12 @@ a:hover {
     border: 1px solid #ccc;
     border-radius: 4px;
 }
+
 .modal-actions {
     text-align: right;
     margin-top: 20px;
 }
+
 .btn-cancel {
     background-color: #ccc;
     padding: 10px 15px;
@@ -473,7 +505,8 @@ a:hover {
 }
 
 .btn-delete {
-    background-color: #d9534f; /* 赤系 */
+    background-color: #d9534f;
+    /* 赤系 */
     color: white;
     padding: 5px 10px;
     border: none;
@@ -481,9 +514,11 @@ a:hover {
     cursor: pointer;
     font-size: 0.9em;
 }
+
 .btn-delete:hover {
     background-color: #c9302c;
 }
+
 .quantity-input {
     width: 60px;
     padding: 5px;
@@ -492,7 +527,7 @@ a:hover {
 }
 
 .btn-add {
-    background-color: #337ab7; 
+    background-color: #337ab7;
     color: white;
     padding: 10px 15px;
     border: none;
@@ -500,13 +535,14 @@ a:hover {
     cursor: pointer;
     margin-right: 10px;
 }
+
 .btn-add:hover {
     background-color: #286090;
 }
 
 .page-actions-container {
-    display: flex;                  
-    justify-content: space-between; 
+    display: flex;
+    justify-content: space-between;
     align-items: center;
     margin-top: 30px;
     padding-top: 20px;
@@ -515,9 +551,9 @@ a:hover {
 
 .page-actions-container .actions-left,
 .page-actions-container .actions-right {
-    display: flex;      
+    display: flex;
     align-items: center;
-    gap: 15px;          
+    gap: 15px;
 }
 
 /* 汎用的なセカンダリボタンのスタイル */
@@ -525,6 +561,7 @@ a:hover {
     background-color: #6c757d;
     color: white;
 }
+
 .btn-secondary:hover {
     background-color: #5a6268;
 }
