@@ -10,7 +10,8 @@ const categoryColors = [
     "#E57373", "#F06292", "#BA68C8", "#9575CD", "#7986CB", "#64B5F6",
     "#4FC3F7", "#4DD0E1", "#4DB6AC", "#81C784", "#AED581", "#DCE775",
     "#FFF176", "#FFD54F", "#FFB74D", "#FF8A65", "#A1887F", "#B0BEC5",
-    "#90A4AE", "#B39DDB", "#F48FB1"
+    "#90A4AE", "#B39DDB", "#F48FB1",
+    "#FFAB91", "#FFCC80", "#E6EE9C", "#C5E1A5", "#A5D6A7", "#80CBC4", "#80DEEA"
 ];
 
 // ご指定のカテゴリ名を配列として定義
@@ -18,7 +19,8 @@ const CATEGORY_NAMES = [
     "ミキサー", "I/Oラック", "プロセッサー", "イーサネットケーブル", "パワーアンプ",
     "スピーカー", "スピーカースタンド", "スピーカーケーブル", "マイク", "マイクアクセサリー",
     "マイクスタンド", "マイクケーブル", "ダイレクトボックス", "プレイバック", "ワイヤレス",
-    "マルチケーブル", "ケーブル", "電源", "アクセサリー", "リギング", "ツール"
+    "マルチケーブル", "ケーブル", "電源", "アクセサリー", "リギング", "ツール",
+    "カメラ", "スイッチャー", "PC", "ケーブル", "コンバーター", "モニター", "周辺機器"
 ];
 
 function showLoading(show) {
@@ -67,19 +69,19 @@ function fetchData(formData) {
         method: 'POST',
         body: formData
     })
-    .then(response => {
-        if (!response.ok) {
-            throw new Error(`HTTP error! status: ${response.status}`);
-        }
-        return response.json();
-    })
-    .catch(error => {
-        console.error("Fetch Error:", error);
-        throw error;
-    })
-    .finally(() => {
-        showLoading(false);
-    });
+        .then(response => {
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
+            return response.json();
+        })
+        .catch(error => {
+            console.error("Fetch Error:", error);
+            throw error;
+        })
+        .finally(() => {
+            showLoading(false);
+        });
 }
 
 function createEquipmentTable(equipmentData) {
@@ -212,7 +214,7 @@ function registerEquipment() {
     const resultAreaId = "registerEquipmentResult";
     document.getElementById(resultAreaId).innerHTML = `<div class="text-center text-blue-600 p-4">🔄 登録中...</div>`;
     const form = document.getElementById('registerEquipmentForm');
-    
+
     const category = form.elements['regEqCategory'].value;
     const name = form.elements['regEqName'].value.trim();
     const total = form.elements['regEqTotal'].value;
@@ -251,7 +253,7 @@ function changeEquipmentInfo() {
     const resultAreaId = "changeEquipmentResult";
     document.getElementById(resultAreaId).innerHTML = `<div class="text-center text-blue-600 p-4">🔄 変更中...</div>`;
     const form = document.getElementById('changeEquipmentForm');
-    
+
     const newCategory = form.elements['changeEqCategory'].value;
     const name = form.elements['changeEqName'].value;
     const quantity = form.elements['changeEqQuantity'].value;
@@ -293,7 +295,7 @@ function populateCategorySelects() {
 
     CATEGORY_NAMES.forEach((name, index) => {
         const categoryNumber = index + 1;
-        
+
         optionsHtml += `<option value="${categoryNumber}">${name}</option>`;
     });
 
@@ -314,18 +316,18 @@ document.addEventListener('DOMContentLoaded', () => {
     const changeManualCheckbox = document.getElementById('changeEqManualPrice');
 
     // 「機材登録」フォームのチェックボックス操作 
-    regManualCheckbox.addEventListener('change', function() {
+    regManualCheckbox.addEventListener('change', function () {
         regUnitPriceInput.disabled = this.checked;
         if (this.checked) {
-            regUnitPriceInput.value = ''; 
-            regUnitPriceInput.required = false; 
+            regUnitPriceInput.value = '';
+            regUnitPriceInput.required = false;
         } else {
-            regUnitPriceInput.required = true; 
+            regUnitPriceInput.required = true;
         }
     });
 
     // 「機材情報変更」フォームのチェックボックス操作
-    changeManualCheckbox.addEventListener('change', function() {
+    changeManualCheckbox.addEventListener('change', function () {
         changeUnitPriceInput.disabled = this.checked;
         if (this.checked) {
             changeUnitPriceInput.value = '';
@@ -354,16 +356,16 @@ document.addEventListener('DOMContentLoaded', () => {
             // 単価とチェックボックスの状態を反映
             if (selectedEquipment.unitPrice === 'manual') {
                 // 手動設定の場合
-                changeManualCheckbox.checked = true;    
-                changeUnitPriceInput.disabled = true;   
-                changeUnitPriceInput.value = '';        
-                changeUnitPriceInput.required = false;  
+                changeManualCheckbox.checked = true;
+                changeUnitPriceInput.disabled = true;
+                changeUnitPriceInput.value = '';
+                changeUnitPriceInput.required = false;
             } else {
                 // 固定単価の場合
-                changeManualCheckbox.checked = false;   
-                changeUnitPriceInput.disabled = false;  
-                changeUnitPriceInput.value = selectedEquipment.unitPrice; 
-                changeUnitPriceInput.required = true;  
+                changeManualCheckbox.checked = false;
+                changeUnitPriceInput.disabled = false;
+                changeUnitPriceInput.value = selectedEquipment.unitPrice;
+                changeUnitPriceInput.required = true;
             }
 
         } else {
