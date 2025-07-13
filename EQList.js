@@ -27,6 +27,7 @@ function showLoading(show) {
     document.getElementById('loadingOverlay').style.display = show ? 'flex' : 'none';
 }
 
+/*
 function showModal(title, message, type = 'alert', onConfirm = null) {
     document.getElementById('modalTitle').textContent = title;
     document.getElementById('modalMessage').innerHTML = message;
@@ -62,6 +63,7 @@ window.onclick = function (event) {
         closeModal();
     }
 }
+*/
 
 function fetchData(formData) {
     showLoading(true);
