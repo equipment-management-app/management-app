@@ -1,4 +1,4 @@
-const GAS_URL = 'https://script.google.com/macros/s/AKfycbyHlBA_-Gz4kC3C6nuk02mRYn9kNSflpL_k2w5sA3HND2wIvbBETlMs3LwBV9rqOqeslQ/exec';
+const GAS_URL = 'https://script.google.com/macros/s/AKfycbzDN3bl22jj1gENDp6dkdm5Yg6Cqu9boj-GZCEA-k8KWEAbGF4eu673aB1agcRNo2-QlA/exec';
 
 // --- DOM要素の取得 ---
 const siteListBody = document.getElementById('site-list-body');
@@ -107,7 +107,7 @@ async function loadSiteList() {
         const response = await fetch(GAS_URL, { method: 'POST', body: formData });
         const result = await response.json();
         if (!result.success) throw new Error(result.error);
-        
+
         fullSiteListData = result.data
             .filter(site => !isNaN(parseInt(site.id)))
             .sort((a, b) => new Date(a.startDate) - new Date(b.startDate));
@@ -134,7 +134,7 @@ function applyFilterAndRender() {
     if (hideCompleted) {
         tempData = tempData.filter(site => site.state !== '完了' && site.state !== 'キャンセル');
     }
-    
+
     // ▼▼▼ 追加: タグによる絞り込みロジック ▼▼▼
     // どちらかのタグフィルターが有効な場合のみ実行
     if (filterVideo || filterAudio) {

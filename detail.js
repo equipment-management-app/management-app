@@ -1,4 +1,4 @@
-const GAS_URL = 'https://script.google.com/macros/s/AKfycbyHlBA_-Gz4kC3C6nuk02mRYn9kNSflpL_k2w5sA3HND2wIvbBETlMs3LwBV9rqOqeslQ/exec';
+const GAS_URL = 'https://script.google.com/macros/s/AKfycbzDN3bl22jj1gENDp6dkdm5Yg6Cqu9boj-GZCEA-k8KWEAbGF4eu673aB1agcRNo2-QlA/exec';
 
 // --- グローバル変数 ---
 const siteNameHeading = document.getElementById('site-name-heading');
@@ -21,7 +21,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         const siteNameDecoded = decodeURIComponent(siteName);
         siteNameHeading.textContent = siteNameDecoded;
         document.title = `${siteNameDecoded} - 現場詳細`;
-        
+
         await loadMasterEquipmentList(); // 先にマスターリストを読み込む
         await loadDetails(uniqueId);
         // 1. 機材追加の入力欄に、文字入力イベントを追加
@@ -113,7 +113,7 @@ async function loadDetails(uniqueId) {
                              <td>${eq.inUse || '-'}</td>`;
 
                 let totalPrice = eq.totalPrice;
-                if(typeof totalPrice === 'number') { totalPrice = totalPrice.toLocaleString(); }
+                if (typeof totalPrice === 'number') { totalPrice = totalPrice.toLocaleString(); }
                 else if (totalPrice === '#NUM!') { totalPrice = ''; }
 
                 if (eq.unitPrice === 'manual') {
@@ -156,7 +156,7 @@ async function loadDetails(uniqueId) {
             document.querySelectorAll('.manual-price-input').forEach(input => input.disabled = true);
             document.getElementById('photo-upload-input').disabled = true;
             const uploadButton = document.querySelector('button[onclick="handlePhotoUpload()"]');
-            if(uploadButton) uploadButton.disabled = true;
+            if (uploadButton) uploadButton.disabled = true;
             document.getElementById('edit-button-container').style.display = 'none';
             document.getElementById('equipment-edit-controls').style.display = 'none';
         }
@@ -197,7 +197,7 @@ function recalculateTotal(inputElement, quantity, index) {
 function updateGrandTotal() {
     let grandTotal = 0;
     document.querySelectorAll('#site-details-body tr').forEach(row => {
-        if(row.cells.length > 4){
+        if (row.cells.length > 4) {
             const cell = row.cells[4]; // 5番目のセル
             const value = parseFloat(cell.textContent.replace(/,/g, '')) || 0;
             grandTotal += value;
@@ -239,7 +239,7 @@ async function updateStatus(selectElement) {
     formData.append('type', 'updateStatus');
     formData.append('id', uniqueId);
     formData.append('status', newStatus);
-    
+
     try {
         const response = await fetch(GAS_URL, { method: 'POST', body: formData });
         const result = await response.json();
@@ -405,7 +405,7 @@ function openEditModal() {
     document.getElementById('editEndDate').value = currentSiteInfo.endDate;
     document.getElementById('editReturnDate').value = currentSiteInfo.returnDate;
     const tagSelect = document.getElementById('editTag');
-    if(currentSiteInfo.tag) tagSelect.value = currentSiteInfo.tag;
+    if (currentSiteInfo.tag) tagSelect.value = currentSiteInfo.tag;
     document.getElementById('editSiteModal').style.display = 'flex';
 }
 function closeEditModal() {
@@ -481,7 +481,7 @@ function addEquipmentToTable() {
     }
     const tableBody = document.getElementById('site-details-body');
     const newRow = tableBody.insertRow();
-    
+
     // Add a check for unitPrice to handle manual case properly
     let unitPriceDisplay = equipmentDetails.unitPrice;
     if (equipmentDetails.unitPrice === 'manual') {
