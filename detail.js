@@ -148,16 +148,11 @@ async function loadDetails(uniqueId) {
         if (currentStatus !== '現場前') {
             const lockNotice = document.createElement('div');
             lockNotice.className = 'lock-notice';
-            lockNotice.textContent = `この現場は「${currentStatus}」のため、編集できません。`;
-            document.body.prepend(lockNotice);
-            document.getElementById('status-select').disabled = true;
-            document.getElementById('return-all-checkbox').disabled = true;
-            document.querySelectorAll('.equipment-return-checkbox').forEach(cb => cb.disabled = true);
-            document.querySelectorAll('.manual-price-input').forEach(input => input.disabled = true);
-            document.getElementById('photo-upload-input').disabled = true;
-            const uploadButton = document.querySelector('button[onclick="handlePhotoUpload()"]');
-            if (uploadButton) uploadButton.disabled = true;
-            document.getElementById('edit-button-container').style.display = 'none';
+            lockNotice.textContent = `この現場は「${currentStatus}」のため、機材の追加・削除はできません。`;
+            const table = document.getElementById('site-details-table');
+            if(table) table.parentNode.insertBefore(lockNotice, table);
+
+            // 機材の追加・削除・使用数変更のボタンのみを非表示にする
             document.getElementById('equipment-edit-controls').style.display = 'none';
         }
     }

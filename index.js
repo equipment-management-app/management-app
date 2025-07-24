@@ -124,10 +124,8 @@ async function loadSiteList() {
 function applyFilterAndRender() {
     const searchTerm = searchInput.value.toLowerCase();
     const hideCompleted = document.getElementById('hide-completed-checkbox').checked;
-    // ▼▼▼ 追加: タグフィルターの状態を取得 ▼▼▼
     const filterVideo = document.getElementById('filter-video').checked;
     const filterAudio = document.getElementById('filter-audio').checked;
-    // ▲▲▲ 追加 ▲▲▲
 
     let tempData = fullSiteListData;
 
@@ -135,19 +133,17 @@ function applyFilterAndRender() {
         tempData = tempData.filter(site => site.state !== '完了' && site.state !== 'キャンセル');
     }
 
-    // ▼▼▼ 追加: タグによる絞り込みロジック ▼▼▼
     // どちらかのタグフィルターが有効な場合のみ実行
     if (filterVideo || filterAudio) {
         tempData = tempData.filter(site => {
             // 「映像」で絞り込み、かつ現場に映像タグがある
-            const videoMatch = filterVideo && site.hasVideo;
+            const videoMatch = filterVideo && site.tag === '映像';
             // 「音響」で絞り込み、かつ現場に音響タグがある
-            const audioMatch = filterAudio && site.hasAudio;
+            const audioMatch = filterAudio && site.tag === '音響';
             // どちらかの条件に一致すれば表示
             return videoMatch || audioMatch;
         });
     }
-    // ▲▲▲ 追加 ▲▲▲
 
     filteredSiteListData = searchTerm
         ? tempData.filter(site => site.name.toLowerCase().includes(searchTerm))
@@ -294,10 +290,8 @@ async function registerSite() {
     const startDate = document.getElementById('startDate').value;
     const endDate = document.getElementById('endDate').value;
     const returnDate = document.getElementById('returnDate').value;
-    // ▼▼▼ 追加: 登録フォームのタグの状態を取得 ▼▼▼
     const hasVideo = document.getElementById('tag-video-reg').checked;
     const hasAudio = document.getElementById('tag-audio-reg').checked;
-    // ▲▲▲ 追加 ▲▲▲
 
     if (!siteName || !startDate || !endDate) { alert("現場名、開始日、撤収日を入力してください。"); return; }
     if (siteEquipmentList.length === 0) { alert("機材を少なくとも1つ追加してください。"); return; }
@@ -310,13 +304,11 @@ async function registerSite() {
         formData.append('endDate', endDate);
         formData.append('returnDate', returnDate);
         console.log(startDate, endDate);
-        // ▼▼▼ 追加: タグ情報をフォームデータに追加 ▼▼▼
         if (hasAudio) {
             formData.append('tag', "音響");
         } else if (hasVideo) {
             formData.append('tag', "映像")
         }
-        // ▲▲▲ 追加 ▲▲▲
         formData.append('equipment', JSON.stringify(siteEquipmentList));
         const plainObject = Object.fromEntries(formData.entries());
         console.log(plainObject);
