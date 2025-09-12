@@ -76,7 +76,7 @@ async function loadDetails(uniqueId) {
 
         currentSiteInfo = result.data.info;
         const siteInfo = result.data.info;
-        const equipmentList = result.data.equipment;
+        currentEquipmentList = result.data.equipment;
 
         const photoPlaceholder = document.getElementById('photo-placeholder');
         const sitePhoto = document.getElementById('site-photo');
@@ -103,43 +103,11 @@ async function loadDetails(uniqueId) {
             returnDateDisplayEl.style.display = 'inline-block';
         }
 
-        siteDetailsBody.innerHTML = '';
 
-        if (equipmentList && equipmentList.length > 0) {
-            equipmentList.forEach((eq, index) => {
-                const row = siteDetailsBody.insertRow();
-                let cells = `<td>${eq.id || '-'}</td>
-                             <td>${eq.name || '-'}</td>
-                             <td>${eq.inUse || '-'}</td>`;
 
-                let totalPrice = eq.totalPrice;
-                if (typeof totalPrice === 'number') { totalPrice = totalPrice.toLocaleString(); }
-                else if (totalPrice === '#NUM!') { totalPrice = ''; }
-
-                if (eq.unitPrice === 'manual') {
-                    cells += `<td><input type="number" class="manual-price-input" placeholder="単価入力" oninput="recalculateTotal(this, ${eq.inUse}, ${index})"></td>
-                              <td><span id="total-price-${index}">${totalPrice || '0'}</span></td>`;
-                } else {
-                    cells += `<td>${eq.unitPrice || '-'}</td>
-                              <td>${totalPrice || '-'}</td>`;
-                }
-                cells += `<td style="text-align: center;">
-                                <input type="checkbox" 
-                                    class="equipment-return-checkbox" 
-                                    data-equipment-id="${eq.id}"
-                                    data-quantity="${eq.inUse}"
-                                    ${eq.isReturned ? 'checked' : ''} 
-                                    onchange="updateEquipmentReturnStatus(this)">
-                            </td>`;
-                row.innerHTML = cells;
-            });
-            document.getElementById('bulk-return-section').style.display = 'block';
-            updateReturnAllCheckboxState();
-            updateGrandTotal();
-        } else {
-            siteDetailsBody.innerHTML = '<tr><td colspan="6" style="text-align:center;">使用されている機材はありません。</td></tr>';
-        }
-
+        renderEquipmentTable(currentEquipmentList);
+        document.getElementById('sort-arrow').textContent = ' ▲▼';
+        initializeDragAndDrop(); // ドラッグ＆ドロップを有効化
     } catch (error) {
         console.error('Error:', error);
         siteDetailsBody.innerHTML = `<tr><td colspan="6">詳細の読み込みに失敗しました。</td></tr>`;
@@ -150,7 +118,7 @@ async function loadDetails(uniqueId) {
             lockNotice.className = 'lock-notice';
             lockNotice.textContent = `この現場は「${currentStatus}」のため、機材の追加・削除はできません。`;
             const table = document.getElementById('site-details-table');
-            if(table) table.parentNode.insertBefore(lockNotice, table);
+            if (table) table.parentNode.insertBefore(lockNotice, table);
 
             // 機材の追加・削除・使用数変更のボタンのみを非表示にする
             document.getElementById('equipment-edit-controls').style.display = 'none';
@@ -530,4 +498,105 @@ function selectAddEqSuggestion(name) {
     document.getElementById('addEqName').value = name;
     document.getElementById('addEquipmentSuggestions').style.display = 'none';
     document.getElementById('addEqQuantity').focus(); // 使用数入力にフォーカスを移動
+}
+
+// グローバル変数に機材リストとソート方向を追加
+let currentEquipmentList = [];
+let sortAscending = false; // true: 昇順, false: 降順
+
+/**
+ * IDで機材リストをソートし、テーブルを再描画する関数
+ */
+function sortEquipmentById() {
+    // ソート方向を切り替える
+    sortAscending = !sortAscending;
+
+    // currentEquipmentListをソート
+    currentEquipmentList.sort((a, b) => {
+        const idA = Number(a.id);
+        const idB = Number(b.id);
+        if (sortAscending) {
+            return idA - idB; // 昇順
+        } else {
+            return idB - idA; // 降順
+        }
+    });
+
+    // ソートされたリストでテーブルを再描画
+    renderEquipmentTable(currentEquipmentList);
+
+    // ヘッダーの矢印を更新
+    document.getElementById('sort-arrow').textContent = sortAscending ? ' ▲' : ' ▼';
+}
+
+/**
+ * 機材リストのテーブルを描画する関数
+ * @param {Array} equipmentList - 表示する機材データの配列
+ */
+function renderEquipmentTable(equipmentList) {
+    siteDetailsBody.innerHTML = ''; // テーブルの中身を一旦空にする
+
+    if (equipmentList && equipmentList.length > 0) {
+        equipmentList.forEach((eq, index) => {
+            const row = siteDetailsBody.insertRow();
+            // (既存の描画ロジックをここに移動)
+            // ハンドルのSVGアイコン
+            const handleIcon = `<svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M9 4H7V6H9V4Z" fill="currentColor" /><path d="M17 4H15V6H17V4Z" fill="currentColor" /><path d="M9 11H7V13H9V11Z" fill="currentColor" /><path d="M17 11H15V13H17V11Z" fill="currentColor" /><path d="M9 18H7V20H9V18Z" fill="currentColor" /><path d="M17 18H15V20H17V18Z" fill="currentColor" /></svg>`;
+
+            let cells = `<td class="drag-handle">${handleIcon}</td>`; // ハンドル用のセルを追加
+
+            cells += `<td>${eq.id || '-'}</td>
+                      <td>${eq.name || '-'}</td>
+                      <td>${eq.inUse || '-'}</td>`;
+
+            let totalPrice = eq.totalPrice;
+            if (typeof totalPrice === 'number') { totalPrice = totalPrice.toLocaleString(); }
+            else if (totalPrice === '#NUM!') { totalPrice = ''; }
+
+            if (eq.unitPrice === 'manual') {
+                cells += `<td><input type="number" class="manual-price-input" placeholder="単価入力" oninput="recalculateTotal(this, ${eq.inUse}, ${index})"></td>
+                          <td><span id="total-price-${index}">${totalPrice || '0'}</span></td>`;
+            } else {
+                cells += `<td>${eq.unitPrice || '-'}</td>
+                          <td>${totalPrice || '-'}</td>`;
+            }
+            cells += `<td style="text-align: center;">
+                            <input type="checkbox"
+                                class="equipment-return-checkbox"
+                                data-equipment-id="${eq.id}"
+                                data-quantity="${eq.inUse}"
+                                ${eq.isReturned ? 'checked' : ''}
+                                onchange="updateEquipmentReturnStatus(this)">
+                        </td>`;
+            row.innerHTML = cells;
+        });
+        document.getElementById('bulk-return-section').style.display = 'block';
+        updateReturnAllCheckboxState();
+        updateGrandTotal();
+    } else {
+        siteDetailsBody.innerHTML = '<tr><td colspan="6" style="text-align:center;">使用されている機材はありません。</td></tr>';
+    }
+}
+/**
+ * SortableJSを初期化してドラッグ＆ドロップ機能を有効にする
+ */
+function initializeDragAndDrop() {
+    // 既存のインスタンスがあれば破棄する
+    if (window.sortableInstance) {
+        window.sortableInstance.destroy();
+    }
+
+    // SortableJSをテーブルボディに適用
+    window.sortableInstance = new Sortable(siteDetailsBody, {
+        animation: 150, // アニメーションの時間
+        handle: '.drag-handle', // ドラッグの起点となる要素
+        ghostClass: 'sortable-ghost', // ドラッグ中のゴースト要素に適用するクラス
+
+        // ドラッグ終了時の処理
+        onEnd: function (evt) {
+            // 内部データ配列(currentEquipmentList)の順序をDOMの順序に合わせる
+            const movedItem = currentEquipmentList.splice(evt.oldIndex, 1)[0];
+            currentEquipmentList.splice(evt.newIndex, 0, movedItem);
+        }
+    });
 }

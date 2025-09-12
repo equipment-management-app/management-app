@@ -583,3 +583,25 @@ a:hover {
     background-color: #e2e6ea;
     text-decoration: none;
 }
+
+/* ヘッダー列の幅を調整 */
+.drag-handle-header {
+    width: 40px;
+    padding: 8px;
+}
+
+/* ドラッグハンドルのスタイル */
+.drag-handle {
+    cursor: grab;
+    /* カーソルを掴む形に変更 */
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    color: #aaa;
+}
+
+/* ドラッグ中の行のスタイル */
+.sortable-ghost {
+    opacity: 0.4;
+    background-color: #e0e7ff;
+}
